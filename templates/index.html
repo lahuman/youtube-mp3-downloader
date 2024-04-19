@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>YouTube MP3 Downloader</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #overlay {
+            position: fixed;
+            display: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 2;
+            cursor: pointer;
+        }
+        #text{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-size: 20px;
+            color: white;
+            transform: translate(-50%,-50%);
+            -ms-transform: translate(-50%,-50%);
+        }
+    </style>
+    <script>
+        function showOverlay() {
+            if (validateYouTubeUrl()) {
+                clearMessages();
+                document.getElementById('overlay').style.display = 'block';
+		setTimeout(() =>  document.getElementById('overlay').style.display = 'none', 10000)
+            } else {
+                alert("Please enter a valid YouTube URL.");
+                return false; // Stop form submission
+            }
+        }
+
+        function clearMessages() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => alert.style.display = 'none');
+        }
+function validateYouTubeUrl() {
+    var url = document.getElementById('youtube_url').value;
+    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
+    return pattern.test(url);
+}
+
+
+    </script>
+</head>
+<body>
+    <div id="overlay">
+        <div id="text">Processing, please wait begin Download...</div>
+    </div>
+    <div class="container">
+        <h1>Download YouTube as MP3</h1>
+        {% for category, message in get_flashed_messages(with_categories=True) %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+        <form action="/mp3" method="POST" onsubmit="return showOverlay()" id="downloadForm">
+            <div class="form-group">
+                <label for="youtube_url">YouTube URL:</label>
+                <input type="text" class="form-control" id="youtube_url" name="youtube_url" placeholder="Enter YouTube URL here" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Download</button>
+        </form>
+        <p class="mt-4 text-center font-weight-bold text-danger">
+            <strong>Legal Disclaimer:</strong> You are solely responsible for ensuring that you have the right to download content from YouTube. This service is provided for convenience and does not transfer any legal responsibility to the service provider. By using this service, you agree to comply with all applicable laws and regulations regarding content download.
+        </p>
+    </div>
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
