@@ -20,8 +20,6 @@ YouTube MP3 Downloader는 사용자가 YouTube 동영상의 URL을 입력하면 
 ### 설치 방법
 
 1. 저장소를 로컬 시스템으로 복제합니다:
-git clone https://github.com/lahuman/youtube-mp3-downloader.git
-cd youtube-mp3-downloader
 
 ```bash
 $ git clone https://github.com/lahuman/youtube-mp3-downloader.git
