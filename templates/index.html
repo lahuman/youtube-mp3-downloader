@@ -19,44 +19,80 @@
             z-index: 2;
             cursor: pointer;
         }
-        #text{
+        #text {
             position: absolute;
-            top: 50%;
+            top: 40%;
             left: 50%;
             font-size: 20px;
             color: white;
-            transform: translate(-50%,-50%);
-            -ms-transform: translate(-50%,-50%);
+            transform: translate(-50%, -50%);
+        }
+        #progressBarContainer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 30px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background-color: #007bff;
+            border-radius: 5px;
+            text-align: center;
+            line-height: 30px; /* Vertically center the text inside the progress bar */
+            color: white;
         }
     </style>
     <script>
+        function validateYouTubeUrl() {
+            var url = document.getElementById('youtube_url').value;
+            var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
+            return pattern.test(url);
+        }
+
         function showOverlay() {
-            if (validateYouTubeUrl()) {
-                clearMessages();
-                document.getElementById('overlay').style.display = 'block';
-		setTimeout(() =>  document.getElementById('overlay').style.display = 'none', 10000)
-            } else {
+            if (!validateYouTubeUrl()) {
                 alert("Please enter a valid YouTube URL.");
-                return false; // Stop form submission
+                return false;
             }
+            clearMessages();
+            document.getElementById('overlay').style.display = 'block';
+            let progressBar = document.getElementById('progressBar');
+            let width = 0;
+            let interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                    document.getElementById('overlay').style.display = 'none';
+                } else {
+                    width++;
+                    progressBar.style.width = width + '%';
+                    progressBar.innerText = width + '%';
+                }
+            }, 200);
+            setTimeout(() => {
+                clearInterval(interval);
+                document.getElementById('overlay').style.display = 'none';
+            }, 20000);
+            return true;
         }
 
         function clearMessages() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => alert.style.display = 'none');
         }
-function validateYouTubeUrl() {
-    var url = document.getElementById('youtube_url').value;
-    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
-    return pattern.test(url);
-}
-
-
     </script>
 </head>
 <body>
     <div id="overlay">
-        <div id="text">Processing, please wait begin Download...</div>
+        <div id="text">Processing, please wait...</div>
+        <div id="progressBarContainer">
+            <div id="progressBar">0%</div>
+        </div>
     </div>
     <div class="container">
         <h1>Download YouTube as MP3</h1>
@@ -79,7 +115,6 @@ function validateYouTubeUrl() {
             <strong>Legal Disclaimer:</strong> You are solely responsible for ensuring that you have the right to download content from YouTube. This service is provided for convenience and does not transfer any legal responsibility to the service provider. By using this service, you agree to comply with all applicable laws and regulations regarding content download.
         </p>
     </div>
-
     <!-- Bootstrap JS, Popper.js, and jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
