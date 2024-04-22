@@ -53,8 +53,16 @@
         </div>
     </div>
     <div class="container">
+	      {% for category, message in get_flashed_messages(with_categories=True) %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
         <h1>Download YouTube as MP3</h1>
-        <form action="/" method="POST" onsubmit="return showOverlay()" id="downloadForm">
+        <form action="/details" method="POST" onsubmit="return showOverlay()" id="downloadForm">
             <div class="form-group">
                 <label for="youtube_url">YouTube URL:</label>
                 <input type="text" class="form-control" id="youtube_url" name="youtube_url" placeholder="Enter YouTube URL here" required>

@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, render_template, redirect, url_for, flash
+from flask import Flask, request, send_file, render_template, redirect, url_for, flash, session, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 import os
 import yt_dlp
@@ -6,11 +6,14 @@ import re
 import pytz
 import time
 from datetime import datetime
+import logging
+
+logging.basicConfig()
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'  # 파일을 저장할 디렉토리 설정
-app.config['SECRET_KEY'] = 'your_secret_key'  # 세션에 대한 시크릿 키 설정
-
+app.config['SECRET_KEY'] = 'helloWorldMyNameIslahuman!+_+'  # 세션에 대한 시크릿 키 설정
+app.config['COOKIE_FILE_PATH'] = '/applications/youtube2mp3/cookies.txt'  # 쿠키 파일 경로 설정
 
 # 폴더가 없다면 생성
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -26,29 +29,67 @@ def is_valid_youtube_url(url):
     return re.match(youtube_regex, url)
 
 
+
 @app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        youtube_url = request.form.get('youtube_url', '')
+def home():
+    return render_template('home.html')
 
-        # 빈값 검증
-        if not youtube_url:
-            flash('YouTube URL cannot be empty.', category='error')
-            return redirect('/mp3')
+@app.route('/details', methods=['POST'])
+def details():
+    youtube_url = request.form.get('youtube_url', '')
+    if not youtube_url or not is_valid_youtube_url(youtube_url):
+        flash('Invalid YouTube URL.', category='error')
+        return redirect(url_for('home'))
+    
+    video_info = get_video_info(youtube_url)
+    if video_info:
+        return render_template('details.html', video_info=video_info, youtube_url=youtube_url)
+    else:
+        flash('Could not retrieve video details.', category='error')
+        return redirect(url_for('home'))
 
-        # 유튜브 주소 검증
-        if not is_valid_youtube_url(youtube_url):
-            flash('Invalid YouTube URL.', category='error')
-            return redirect('/mp3')
+def get_video_info(url):
+    ydl_opts = {
+        'format': 'best',
+        'quiet': True,
+        'no_warnings': True,
+        'cookies': app.config['COOKIE_FILE_PATH']
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        try:
+            info_dict = ydl.extract_info(url, download=False)
+            video_info = {
+                'id': info_dict.get('id'),
+                'url': url,
+                'title': info_dict.get('title'),
+                'uploader': info_dict.get('uploader'),
+                'thumbnail': info_dict.get('thumbnail'),
+                'duration': info_dict.get('duration')
+            }
+            return video_info
+        except Exception as e:
+            print(f"Error retrieving video info: {e}")
+            return None
 
-        download_path = download_youtube_mp3(youtube_url)
-        if download_path:
-            return send_file(download_path, as_attachment=True)
-        else:
-            flash('Failed to download the video or the video is too long.', category='error')
-            return redirect('/mp3')
+@app.route('/download', methods=['POST'])
+def download():
+    youtube_url = request.form['youtube_url']
+    if not youtube_url or not is_valid_youtube_url(youtube_url):
+        return jsonify({'error': 'Invalid URL'}), 400
+    download_path = download_youtube_mp3(youtube_url)
+    if download_path:
+        # Store the path in session or directly pass it in a safe way to the client
+        session['download_path'] = download_path  # Make sure to secure this approach in a production environment
+        return jsonify({'success': True}), 200
+    else:
+        return jsonify({'error': 'Download failed'}), 500
 
-    return render_template('index.html')
+@app.route('/serve_file')
+def serve_file():
+    if 'download_path' in session:
+        path_to_file = session['download_path']
+        return send_file(path_to_file, as_attachment=True)
+    return "File not found", 404
 
 def sanitize_filename(filename):
     """ 파일명에서 특수 문자를 제거하고, 파일 시스템에서 안전하게 사용할 수 있도록 처리 """
@@ -69,7 +110,8 @@ def download_youtube_mp3(url):
     ydl_opts = {
         'geo_bypass': True,
         'quiet': False,
-        'verbose': True
+        'verbose': False,
+        'cookies': app.config['COOKIE_FILE_PATH']  # 쿠키 파일 경로 추가
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -114,8 +156,9 @@ def download_video(video_url, output_path):
         }],
         'outtmpl': os.path.join(output_path),
         'quiet': False,
-        'verbose': True,
+        'verbose': False,
         'ignoreerrors': True,  # 오류를 무시하고 계속 진행
+        'cookies': app.config['COOKIE_FILE_PATH']  # 쿠키 파일 경로 추가
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -159,12 +202,12 @@ def delete_old_files(directory, age_in_seconds):
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(func=delete_old_files, args=['uploads', 10800*4], trigger="interval", seconds=10)
+    scheduler.add_job(func=delete_old_files, args=['uploads', 10800], trigger="interval", seconds=10)
     scheduler.start()
-    print("Scheduler started.")
+    logging.info("Scheduler started.")
 
 
 if __name__ == '__main__':
-    start_scheduler()
-    app.run(debug=False, port=8000)
+    #start_scheduler()
+    app.run(debug=False, use_reloader=False, port=8000)
 
