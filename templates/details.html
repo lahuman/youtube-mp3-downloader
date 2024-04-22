@@ -6,98 +6,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-      #overlay {
-        position: fixed;
-        display: none;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 2;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-      }
-
-      #text {
-        font-size: 20px;
-        color: white;
-      }
-
-      #progressBarContainer {
-        width: 80%;
-        height: 30px;
-        background-color: #ddd;
-        border-radius: 5px;
-        overflow: hidden;
-        margin-top: 20px;
-      }
-
-      #progressBar {
-        height: 100%;
-        width: 0%;
-        background-color: #007bff;
-        border-radius: 5px;
-        line-height: 30px;
-        /* Vertically center the text inside the progress bar */
-        color: white;
-        text-align: center;
-      }
-
-      body {
-        font-family: Arial, sans-serif;
-      }
-
-      .video-wrapper {
-        position: relative;
-        padding-bottom: 56.25%;
-        /* 16:9 aspect ratio */
-        height: 0;
-      }
-
-      .video-wrapper iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-
-      .details-container {
-        margin-top: 20px;
-      }
+        <style>
+        body {
+            font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin-top: 30px;
+        }
+        .container {
+            padding: 30px;
+        }
+        .card {
+            box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.14);
+            border: 0;
+            margin-bottom: 30px;
+        }
+        .card-header-primary {
+            background: linear-gradient(60deg, #ab47bc, #7b1fa2);
+            color: #fff;
+        }
+        .card-body {
+            padding: 15px;
+            position: relative;
+        }
+        .overlay {
+            position: fixed;
+            display: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1050;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #text {
+            font-size: 20px;
+            color: white;
+        }
+        #progressBarContainer {
+            width: 80%;
+            height: 30px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background-color: #007bff;
+            border-radius: 5px;
+            line-height: 30px;
+            color: white;
+            text-align: center;
+        }
     </style>
+
   </head>
   <body>
-    <div id="overlay">
+    <div id="overlay" class="overlay">
       <div id="text">Processing, please wait...</div>
       <div id="progressBarContainer">
         <div id="progressBar">0%</div>
       </div>
     </div>
-    <div class="container">
-      <h1>{{ video_info.title }}</h1>
-      <div class="details-container">
-        <p>
-          <strong>Uploader:</strong> {{ video_info.uploader }}
+  
+  <div class="container">
+        <div class="card">
+            <div class="card-header card-header-primary">
+                <h4 class="card-title">{{ video_info.title }}</h4>
+                <p class="card-category">{{ video_info.uploader }}</p>
+            </div>
+            <div class="card-body">
+                <img src="{{ video_info.thumbnail }}" alt="Thumbnail" class="img-fluid mb-2">
+                <h5>Duration: {{ video_info.duration }} seconds</h5>
+                <form action="/download" method="POST" id="downloadForm" onsubmit="return showOverlay()">
+                    <input type="hidden" id="youtube_url" name="youtube_url" value="{{ video_info.url }}">
+                    <button type="submit" class="btn btn-primary btn-round">Download MP3</button>
+                </form>
+            </div>
+        </div>
+        <p class="text-center text-danger">
+            <strong>Legal Disclaimer:</strong> You are solely responsible for ensuring that you have the right to download content from YouTube. This service is provided for convenience and does not transfer any legal responsibility to the service provider. By using this service, you agree to comply with all applicable laws and regulations regarding content download.
         </p>
-        <p>
-          <strong>Duration:</strong> {{ video_info.duration }} seconds
-        </p>
-        <img src="{{ video_info.thumbnail }}" alt="Thumbnail" style="width: 200px; height: auto;">
-        <form action="/download" method="POST" id="downloadForm" onsubmit="return showOverlay()">
-          <input type="hidden" id="youtube_url" name="youtube_url" value="{{ video_info.url }}">
-          <button type="submit" class="btn btn-primary">Download MP3</button>
-        </form>
-      </div>
-      <p class="mt-4 text-center text-danger">
-        <strong>Legal Disclaimer:</strong> You are solely responsible for ensuring that you have the right to download content from YouTube. This service is provided for convenience and does not transfer any legal responsibility to the service provider. By using this service, you agree to comply with all applicable laws and regulations regarding content download.
-      </p>
     </div>
+
     <!-- Bootstrap JS, Popper.js, and jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
@@ -157,7 +152,7 @@
             progressBar.style.width = width + '%';
             progressBar.innerText = width + '%';
           }
-        }, 200);
+        }, 300);
         setTimeout(() => {
           clearInterval(interval);
           document.getElementById('overlay').style.display = 'none';

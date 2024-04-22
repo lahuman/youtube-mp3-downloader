@@ -7,6 +7,41 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+ body {
+            font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            padding-top: 40px;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #9c27b0;
+            color: #fff;
+            border-radius: 6px 6px 0 0;
+            padding: 10px 15px;
+            font-size: 20px;
+        }
+        .card-body {
+            padding: 15px;
+        }
+	 .form-group {
+            margin-bottom: 15px;
+        }
+        .btn-primary {
+            background-color: #9c27b0;
+            border: none;
+        }
+        .legal-disclaimer {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #666;
+        }
         #overlay {
             position: fixed;
             display: none;
@@ -52,27 +87,35 @@
             <div id="progressBar">0%</div>
         </div>
     </div>
+
     <div class="container">
-	      {% for category, message in get_flashed_messages(with_categories=True) %}
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+        <div class="card">
+            <div class="card-header">
+                Download YouTube as MP3
             </div>
-        {% endfor %}
-        <h1>Download YouTube as MP3</h1>
-        <form action="/details" method="POST" onsubmit="return showOverlay()" id="downloadForm">
-            <div class="form-group">
-                <label for="youtube_url">YouTube URL:</label>
-                <input type="text" class="form-control" id="youtube_url" name="youtube_url" placeholder="Enter YouTube URL here" required>
+            <div class="card-body">
+                {% for category, message in get_flashed_messages(with_categories=True) %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %}
+                <form action="/details" method="POST" id="downloadForm" onsubmit="return showOverlay()">
+                    <div class="form-group">
+                        <label for="youtube_url">YouTube URL:</label>
+                        <input type="text" class="form-control" id="youtube_url" name="youtube_url" placeholder="Enter YouTube URL here" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" onclick="return showOverlay()">Download</button>
+                </form>
             </div>
-            <button type="submit" class="btn btn-primary">Download</button>
-        </form>
-        <p class="mt-4 text-center text-danger">
+        </div>
+        <p class="text-center legal-disclaimer">
             <strong>Legal Disclaimer:</strong> You are solely responsible for ensuring that you have the right to download content from YouTube. This service is provided for convenience and does not transfer any legal responsibility to the service provider. By using this service, you agree to comply with all applicable laws and regulations regarding content download.
         </p>
     </div>
+
     <script>
         function validateYouTubeUrl() {
             var url = document.getElementById('youtube_url').value;
