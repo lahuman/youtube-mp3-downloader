@@ -118,8 +118,9 @@
             if (response.success) {
               window.location.href = '/serve_file';
               setTimeout(() => {
+		alert("Starting the download.")
                 window.location.href = '/'; // Redirect the original window to the home page
-              }, 1500);
+              }, 500);
             } else {
               alert('Error: File could not be downloaded.');
             }
