@@ -110,7 +110,7 @@ def download_youtube_mp3(url):
     ydl_opts = {
         'geo_bypass': True,
         'quiet': False,
-        'verbose': False,
+        'verbose': True,
         'cookies': app.config['COOKIE_FILE_PATH']  # 쿠키 파일 경로 추가
     }
 
@@ -120,9 +120,9 @@ def download_youtube_mp3(url):
             if not isinstance(info_dict, dict):  # 반환된 데이터가 사전이 아닐 경우
                 print("Failed to retrieve video info")
                 return None
-            
+            print(info_dict.get('duration', 0)) 
             # 길이 검증: 600초(10분)을 초과하면 오류 처리
-            if info_dict.get('duration', 0) > 600:
+            if info_dict.get('duration', 0) == 0 or info_dict.get('duration', 0) > 1000:
                 print(f"The video is longer than the allowed 10 minutes: {info_dict['duration']} seconds")
                 return None  # 또는 적절한 오류 메시지 반환
 
@@ -209,5 +209,5 @@ def start_scheduler():
 
 if __name__ == '__main__':
     #start_scheduler()
-    app.run(debug=False, use_reloader=False, port=8000)
+    app.run(debug=True, use_reloader=False, port=8000, host="10.0.0.98")
 

@@ -98,8 +98,8 @@
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-      if( {{ video_info.duration }} >= 1000 ) {
-	alert('Videos longer than 1000 seconds cannot be processed!');
+      if( '{{ video_info.duration }}' == 'None'  || {{ video_info.duration }} >= 1000 ) {
+	alert('Videos longer than 1000 seconds or realtime cannot be processed!');
 	window.location.href = '/';	
       }
       function validateYouTubeUrl() {
@@ -118,6 +118,7 @@
             if (response.success) {
               window.location.href = '/serve_file';
               setTimeout(() => {
+		hideOverlay()
 		alert("Starting the download.")
                 window.location.href = '/'; // Redirect the original window to the home page
               }, 500);
@@ -126,6 +127,7 @@
             }
           },
           error: function() {
+	    hideOverlay()
             alert('Download failed.');
           },
           complete: function() {
@@ -133,6 +135,7 @@
         });
       });
 
+      let interval;
       function showOverlay() {
         if (!validateYouTubeUrl()) {
           alert("Please enter a valid YouTube URL.");
@@ -142,7 +145,7 @@
         document.getElementById('overlay').style.display = 'flex';
         let progressBar = document.getElementById('progressBar');
         let width = 0;
-        let interval = setInterval(() => {
+        interval = setInterval(() => {
           if (width >= 100) {
             clearInterval(interval);
             document.getElementById('overlay').style.display = 'none';
@@ -155,10 +158,7 @@
           }
         }, 300);
         setTimeout(() => {
-          clearInterval(interval);
-          document.getElementById('overlay').style.display = 'none';
-          progressBar.style.width = '0%'; // Reset progress bar
-          progressBar.innerText = '0%'; // Reset progress text
+	  hideOverlay()
         }, 30000); // Maximum wait time 20 seconds
         return true;
       }
@@ -169,6 +169,7 @@
       }
 
       function hideOverlay() {
+	clearInterval(interval);
         document.getElementById('overlay').style.display = 'none';
         document.getElementById('progressBar').style.width = '0%';
         document.getElementById('progressBar').innerText = '0%';
