@@ -5,6 +5,11 @@
 ## 프로젝트 설명
 YouTube MP3 Downloader는 사용자가 YouTube 동영상의 URL을 입력하면 MP3 파일로 변환하여 다운로드할 수 있게 해주는 웹 애플리케이션입니다. 이 프로젝트는 Flask를 기반으로 구현되었으며, `yt-dlp` 라이브러리를 사용하여 오디오 추출 기능을 제공합니다.
 
+## update 정보
+- 1차 단순 mp3 다운로드 기능 개발 **24.4.19**
+- mp4 다운로드 기능 개발 **24.4.20**
+- [python-rq](https://python-rq.org/) 를 활용한 다운로드 tasks 적용 **24.4.29**
+
 ## 주요 기능
 - YouTube 동영상 URL을 통한 MP3 파일 생성 및 다운로드
 - 가상 환경에서 실행을 위한 설정 포함
@@ -16,6 +21,7 @@ YouTube MP3 Downloader는 사용자가 YouTube 동영상의 URL을 입력하면 
 프로젝트를 실행하기 전에 다음 소프트웨어가 설치되어 있어야 합니다:
 - Python 3.8 이상
 - pip (Python 패키지 관리자)
+- redis 
 
 ### 설치 방법
 
@@ -37,7 +43,9 @@ $ pip install -r requirements.txt
 3. 웹 애플리케이션 실행:
 
 ```bash
-python app.py
+# rq worker 실행
+$ rq worker --with-scheduler &
+$ python app.py
 ```
 
 
@@ -52,6 +60,7 @@ python app.py
 3. 변경 사항을 커밋합니다 (`git commit -m 'Add some AmazingFeature'`).
 4. 브랜치에 푸시합니다 (`git push origin feature/AmazingFeature`).
 5. Pull Request를 보냅니다.
+
 
 ## 라이선스
 이 프로젝트는 MIT 라이선스를 따릅니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
