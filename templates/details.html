@@ -1,230 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <title>YouTube MP3 Downloader</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-        <style>
-        body {
-            font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-            margin-top: 30px;
-        }
-        .container {
-            padding: 30px;
-        }
-        .card {
-            box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.14);
-            border: 0;
-            margin-bottom: 30px;
-        }
-        .card-header-primary {
-            background: linear-gradient(60deg, #ab47bc, #7b1fa2);
-            color: #fff;
-        }
-        .card-body {
-            padding: 15px;
-            position: relative;
-        }
-        .overlay {
-            position: fixed;
-            display: none;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 1050;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-        #text {
-            font-size: 20px;
-            color: white;
-        }
-        #progressBarContainer {
-            width: 80%;
-            height: 30px;
-            background-color: #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        #progressBar {
-            height: 100%;
-            width: 0%;
-            background-color: #007bff;
-            border-radius: 5px;
-            line-height: 30px;
-            color: white;
-            text-align: center;
-        }
-    </style>
 
-  </head>
-  <body>
-    <div id="overlay" class="overlay">
-      <div id="text">Processing, please wait...</div>
-      <div id="progressBarContainer">
-        <div id="progressBar">0%</div>
-      </div>
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube MP3 Downloader</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+      margin-top: 30px;
+    }
+
+    .container {
+      padding: 30px;
+    }
+
+    .card {
+      box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.14);
+      border: 0;
+      margin-bottom: 30px;
+    }
+
+    .card-header-primary {
+      background: linear-gradient(60deg, #ab47bc, #7b1fa2);
+      color: #fff;
+    }
+
+    .card-body {
+      padding: 15px;
+      position: relative;
+    }
+
+    .overlay {
+      position: fixed;
+      display: none;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1050;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #text {
+      font-size: 20px;
+      color: white;
+    }
+
+    #progressBarContainer {
+      width: 80%;
+      height: 30px;
+      background-color: #ddd;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background-color: #007bff;
+      border-radius: 5px;
+      line-height: 30px;
+      color: white;
+      text-align: center;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="overlay" class="overlay">
+    <div id="text">Processing, please wait...</div>
+    <div id="progressBarContainer">
+      <div id="progressBar">0%</div>
     </div>
-  
-  <div class="container">
-        <div class="card">
-            <div class="card-header card-header-primary">
-                <h4 class="card-title">{{ video_info.title }}</h4>
-                <p class="card-category">{{ video_info.uploader }}</p>
-            </div>
-            <div class="card-body">
-                <img src="{{ video_info.thumbnail }}" alt="Thumbnail" class="img-fluid mb-2">
-                <h5>Duration: {{ video_info.duration }} seconds</h5>
-                <form action="/download" method="POST" id="downloadForm" onsubmit="return showOverlay()">
-                    <input type="hidden" id="youtube_url" name="youtube_url" value="{{ video_info.url }}">
+  </div>
 
-        <!-- Dropdown for selecting format -->
-        <div class="mb-3">
+  <div class="container">
+    <div class="card">
+      <div class="card-header card-header-primary">
+        <h4 class="card-title">{{ video_info.title }}</h4>
+        <p class="card-category">{{ video_info.uploader }}</p>
+      </div>
+      <div class="card-body">
+        <img src="{{ video_info.thumbnail }}" alt="Thumbnail" class="img-fluid mb-2">
+        <h5>Duration: {{ video_info.duration }} seconds</h5>
+        <form action="/download" method="POST" id="downloadForm" onsubmit="return showOverlay()">
+          <input type="hidden" id="youtube_url" name="youtube_url" value="{{ video_info.url }}">
+
+          <!-- Dropdown for selecting format -->
+          <div class="mb-3">
             <label for="format" class="form-label">Format:</label>
             <select class="form-select" id="format" name="format">
-                <option value="mp3">MP3 - Audio</option>
-                <option value="mp4">MP4 - Video</option>
+              <option value="mp3">MP3 - Audio</option>
+              <option value="mp4">MP4 - Video</option>
             </select>
-        </div>
+          </div>
 
-        <!-- Dropdown for selecting quality -->
-        <div class="mb-3">
+          <!-- Dropdown for selecting quality -->
+          <div class="mb-3">
             <label for="quality" class="form-label">Quality:</label>
             <select class="form-select" id="quality" name="quality">
-                <option value="192">192 kbps</option>
-                <option value="256">256 kbps</option>
-                <option value="320">320 kbps</option>
+              <option value="192">192 kbps</option>
+              <option value="256">256 kbps</option>
+              <option value="320">320 kbps</option>
             </select>
-        </div>
-		     <div class="d-flex justify-content-between">
-                        <button type="sumit" class="btn btn-primary btn-round">Download</button>
-		        <button type="button" onclick="window.location='/'" class="btn btn-secondary btn-round">Go Back</button>
-		     </div>
-                </form>
-            </div>
-        </div>
-        <p class="text-center text-danger">
-            <strong>Legal Disclaimer:</strong> You are solely responsible for ensuring that you have the right to download content from YouTube. This service is provided for convenience and does not transfer any legal responsibility to the service provider. By using this service, you agree to comply with all applicable laws and regulations regarding content download.
-        </p>
+          </div>
+          <div class="d-flex justify-content-between">
+            <button type="sumit" class="btn btn-primary btn-round">Download</button>
+            <button type="button" onclick="window.location='/'" class="btn btn-secondary btn-round">Go Back</button>
+          </div>
+        </form>
+      </div>
     </div>
+    <p class="text-center text-danger">
+      <strong>Legal Disclaimer:</strong> You are solely responsible for ensuring that you have the right to download
+      content from YouTube. This service is provided for convenience and does not transfer any legal responsibility to
+      the service provider. By using this service, you agree to comply with all applicable laws and regulations
+      regarding content download.
+    </p>
+  </div>
 
-    <!-- Bootstrap JS, Popper.js, and jQuery -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-      if( '{{ video_info.duration }}' == 'None'  || {{ video_info.duration }} >= (60 * 60 * 2 )) {
-	alert('Videos longer than 2 hours or realtime cannot be processed!');
-	window.location.href = '/';	
-      }
-      function validateYouTubeUrl() {
-        var url = document.getElementById('youtube_url').value;
-        var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
-        return pattern.test(url);
-      
-      }
-document.getElementById('format').addEventListener('change', function() {
-    let qualitySelect = document.getElementById('quality');
-    qualitySelect.innerHTML = '';
+  <!-- Bootstrap JS, Popper.js, and jQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    if ('{{ video_info.duration }}' == 'None' || {{ video_info.duration }} >= (60 * 60 * 2)) {
+      alert('Videos longer than 2 hours or realtime cannot be processed!');
+      window.location.href = '/';
+    }
+    function validateYouTubeUrl() {
+      var url = document.getElementById('youtube_url').value;
+      var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
+      return pattern.test(url);
 
-    if (this.value == 'mp3') {
+    }
+    document.getElementById('format').addEventListener('change', function () {
+      let qualitySelect = document.getElementById('quality');
+      qualitySelect.innerHTML = '';
+
+      if (this.value == 'mp3') {
         qualitySelect.innerHTML = `
             <option value="192">192 kbps</option>
             <option value="256">256 kbps</option>`;
-    } else if (this.value == 'mp4') {
+      } else if (this.value == 'mp4') {
         qualitySelect.innerHTML = `
             <option value="360p">360p</option>
             <option value="720p">720p</option>`;
-    }
-});
+      }
+    });
 
 
-function checkDownloadStatus(jobId) {
+    function checkDownloadStatus(jobId) {
 
-    interval = setInterval(function() {
+      interval = setInterval(function () {
         fetch(`/status/${jobId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'complete') {
-		    window.location = '/serve_file';
-                    alert('Begin Download') ;
-		    hideOverlay()
-                } else if (data.status === 'failed') {
-                    alert('Download failed!');
-		    hideOverlay()
-                } else {
-                    console.log('Download in progress...');
-		    showOverlay()
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    }, 5000);  // Check every 5 seconds
-}
-
-      $('#downloadForm').on('submit', function(e) {
-        e.preventDefault(); // Prevent default form submission
-        showOverlay();
-        $.ajax({
-          type: $(this).attr('method'),
-          url: $(this).attr('action'),
-          data: $(this).serialize(),
-          success: function(response) {
-            if (response.job_id) {
-	      checkDownloadStatus(response.job_id)	
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'complete') {
+              window.location = '/serve_file';
+              alert('Begin Download');
+              hideOverlay()
+            } else if (data.status === 'failed') {
+              alert('Download failed!');
+              hideOverlay()
             } else {
-              alert('Error: File could not be downloaded.');
+              console.log('Download in progress...');
+              showOverlay()
             }
-          },
-          error: function() {
-	    hideOverlay()
-            alert('Download failed.');
-          },
-          complete: function() {
-          }
-        });
-      });
+          })
+          .catch(error => console.error('Error:', error));
+      }, 5000);  // Check every 5 seconds
+    }
 
-      let interval, width=0;
-      function showOverlay() {
-        if (!validateYouTubeUrl()) {
-          alert("Please enter a valid YouTube URL.");
-          return false;
-        }
-        clearMessages();
-        document.getElementById('overlay').style.display = 'flex';
-        let progressBar = document.getElementById('progressBar');
-          if (width >= 100) {
-	    width = 80
+    $('#downloadForm').on('submit', function (e) {
+      e.preventDefault(); // Prevent default form submission
+      showOverlay();
+      $.ajax({
+        type: $(this).attr('method'),
+        url: $(this).attr('action'),
+        data: $(this).serialize(),
+        success: function (response) {
+          if (response.job_id) {
+            checkDownloadStatus(response.job_id)
           } else {
-	    if(width < 30) width += 10;
-	    else if(width < 50) width += 5;
-            else if(width < 80) width++;
-
-            progressBar.style.width = width + '%';
-            progressBar.innerText = width + '%';
+            alert('Error: File could not be downloaded.');
           }
-        return true;
-      }
+        },
+        error: function () {
+          hideOverlay()
+          alert('Download failed.');
+        },
+        complete: function () {
+        }
+      });
+    });
 
-      function clearMessages() {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => alert.style.display = 'none');
+    let interval, width = 0;
+    function showOverlay() {
+      if (!validateYouTubeUrl()) {
+        alert("Please enter a valid YouTube URL.");
+        return false;
       }
+      clearMessages();
+      document.getElementById('overlay').style.display = 'flex';
+      let progressBar = document.getElementById('progressBar');
+      if (width >= 100) {
+        width = 80
+      } else {
+        if (width < 30) width += 10;
+        else if (width < 50) width += 5;
+        else if (width < 80) width++;
 
-      function hideOverlay() {
-	clearInterval(interval);
-	width = 0;
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById('progressBar').style.width = '0%';
-        document.getElementById('progressBar').innerText = '0%';
+        progressBar.style.width = width + '%';
+        progressBar.innerText = width + '%';
       }
-    </script>
-  </body>
+      return true;
+    }
+
+    function clearMessages() {
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => alert.style.display = 'none');
+    }
+
+    function hideOverlay() {
+      clearInterval(interval);
+      width = 0;
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('progressBar').style.width = '0%';
+      document.getElementById('progressBar').innerText = '0%';
+    }
+  </script>
+</body>
+
 </html>
