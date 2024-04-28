@@ -84,7 +84,29 @@
                 <h5>Duration: {{ video_info.duration }} seconds</h5>
                 <form action="/download" method="POST" id="downloadForm" onsubmit="return showOverlay()">
                     <input type="hidden" id="youtube_url" name="youtube_url" value="{{ video_info.url }}">
-                    <button type="submit" class="btn btn-primary btn-round">Download MP3</button>
+
+        <!-- Dropdown for selecting format -->
+        <div class="mb-3">
+            <label for="format" class="form-label">Format:</label>
+            <select class="form-select" id="format" name="format">
+                <option value="mp3">MP3 - Audio</option>
+                <option value="mp4">MP4 - Video</option>
+            </select>
+        </div>
+
+        <!-- Dropdown for selecting quality -->
+        <div class="mb-3">
+            <label for="quality" class="form-label">Quality:</label>
+            <select class="form-select" id="quality" name="quality">
+                <option value="192">192 kbps</option>
+                <option value="256">256 kbps</option>
+                <option value="320">320 kbps</option>
+            </select>
+        </div>
+		     <div class="d-flex justify-content-between">
+                        <button type="sumit" class="btn btn-primary btn-round">Download</button>
+		        <button type="button" onclick="window.location='/'" class="btn btn-secondary btn-round">Go Back</button>
+		     </div>
                 </form>
             </div>
         </div>
@@ -98,15 +120,54 @@
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-      if( '{{ video_info.duration }}' == 'None'  || {{ video_info.duration }} >= 1000 ) {
-	alert('Videos longer than 1000 seconds or realtime cannot be processed!');
+      if( '{{ video_info.duration }}' == 'None'  || {{ video_info.duration }} >= (60 * 60 * 2 )) {
+	alert('Videos longer than 2 hours or realtime cannot be processed!');
 	window.location.href = '/';	
       }
       function validateYouTubeUrl() {
         var url = document.getElementById('youtube_url').value;
         var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
         return pattern.test(url);
+      
       }
+document.getElementById('format').addEventListener('change', function() {
+    let qualitySelect = document.getElementById('quality');
+    qualitySelect.innerHTML = '';
+
+    if (this.value == 'mp3') {
+        qualitySelect.innerHTML = `
+            <option value="192">192 kbps</option>
+            <option value="256">256 kbps</option>`;
+    } else if (this.value == 'mp4') {
+        qualitySelect.innerHTML = `
+            <option value="360p">360p</option>
+            <option value="720p">720p</option>`;
+    }
+});
+
+
+function checkDownloadStatus(jobId) {
+
+    interval = setInterval(function() {
+        fetch(`/status/${jobId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'complete') {
+		    window.location = '/serve_file';
+                    alert('Begin Download') ;
+		    hideOverlay()
+                } else if (data.status === 'failed') {
+                    alert('Download failed!');
+		    hideOverlay()
+                } else {
+                    console.log('Download in progress...');
+		    showOverlay()
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }, 5000);  // Check every 5 seconds
+}
+
       $('#downloadForm').on('submit', function(e) {
         e.preventDefault(); // Prevent default form submission
         showOverlay();
@@ -115,13 +176,8 @@
           url: $(this).attr('action'),
           data: $(this).serialize(),
           success: function(response) {
-            if (response.success) {
-              window.location.href = '/serve_file';
-              setTimeout(() => {
-		hideOverlay()
-		alert("Starting the download.")
-                window.location.href = '/'; // Redirect the original window to the home page
-              }, 500);
+            if (response.job_id) {
+	      checkDownloadStatus(response.job_id)	
             } else {
               alert('Error: File could not be downloaded.');
             }
@@ -135,7 +191,7 @@
         });
       });
 
-      let interval;
+      let interval, width=0;
       function showOverlay() {
         if (!validateYouTubeUrl()) {
           alert("Please enter a valid YouTube URL.");
@@ -144,22 +200,16 @@
         clearMessages();
         document.getElementById('overlay').style.display = 'flex';
         let progressBar = document.getElementById('progressBar');
-        let width = 0;
-        interval = setInterval(() => {
           if (width >= 100) {
-            clearInterval(interval);
-            document.getElementById('overlay').style.display = 'none';
-            progressBar.style.width = '0%'; // Reset progress bar
-            progressBar.innerText = '0%'; // Reset progress text
+	    width = 80
           } else {
-            width++;
+	    if(width < 30) width += 10;
+	    else if(width < 50) width += 5;
+            else if(width < 80) width++;
+
             progressBar.style.width = width + '%';
             progressBar.innerText = width + '%';
           }
-        }, 300);
-        setTimeout(() => {
-	  hideOverlay()
-        }, 30000); // Maximum wait time 20 seconds
         return true;
       }
 
@@ -170,6 +220,7 @@
 
       function hideOverlay() {
 	clearInterval(interval);
+	width = 0;
         document.getElementById('overlay').style.display = 'none';
         document.getElementById('progressBar').style.width = '0%';
         document.getElementById('progressBar').innerText = '0%';
