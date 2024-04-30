@@ -92,7 +92,7 @@
       <div class="card-body">
         <img src="{{ video_info.thumbnail }}" alt="Thumbnail" class="img-fluid mb-2">
         <h5>Duration: {{ video_info.duration }} seconds</h5>
-        <form action="/download" method="POST" id="downloadForm" onsubmit="return showOverlay()">
+        <form action="/download" method="POST" id="downloadForm" >
           <input type="hidden" id="youtube_url" name="youtube_url" value="{{ video_info.url }}">
 
           <!-- Dropdown for selecting format -->
@@ -216,9 +216,9 @@
       if (width >= 100) {
         width = 80
       } else {
-        if (width < 30) width += 10;
-        else if (width < 50) width += 5;
-        else if (width < 80) width++;
+        if (width < 30) width += 8;
+        else if (width < 75) width += 5;
+        else width++;
 
         progressBar.style.width = width + '%';
         progressBar.innerText = width + '%';
