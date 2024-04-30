@@ -19,6 +19,7 @@ def download_media(url, format='mp3', quality='192'):
         'geo_bypass': True,
         'quiet': False,
         'verbose': True,
+        'cookiefile': '/applications/youtube2mp3/cookies.txt',
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
@@ -69,7 +70,6 @@ def download_video(video_url, output_path, format='mp3', quality='192'):
             format_spec = 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]'
         else:
             format_spec = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]'
-        print(format_spec)
         ydl_opts = {
             'format': format_spec,
             'outtmpl': output_path + '.mp4',
@@ -85,6 +85,7 @@ def download_video(video_url, output_path, format='mp3', quality='192'):
         'quiet': False,
         'verbose': True,
         'ignoreerrors': True,
+        'cookiefile': '/applications/youtube2mp3/cookies.txt',
     })
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

@@ -69,7 +69,7 @@ def get_video_info(url):
         'format': 'best',
         'quiet': True,
         'no_warnings': True,
-        'cookies': app.config['COOKIE_FILE_PATH']
+        'cookiefile': app.config['COOKIE_FILE_PATH']
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
