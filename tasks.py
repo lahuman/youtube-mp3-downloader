@@ -19,7 +19,6 @@ def download_media(url, format='mp3', quality='192'):
         'geo_bypass': True,
         'quiet': False,
         'verbose': True,
-        'cookiefile': '/applications/youtube2mp3/cookies.txt',
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
@@ -85,7 +84,6 @@ def download_video(video_url, output_path, format='mp3', quality='192'):
         'quiet': False,
         'verbose': True,
         'ignoreerrors': True,
-        'cookiefile': '/applications/youtube2mp3/cookies.txt',
     })
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

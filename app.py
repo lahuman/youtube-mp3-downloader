@@ -23,7 +23,7 @@ Session(app)
 
 # Set up Redis Queue for background tasks
 r = redis.Redis()
-q = Queue(connection=r)
+q = Queue(connection=r, default_timeout=3600)
 
 logging.basicConfig()
 
@@ -134,5 +134,5 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=False, port=8000, host="10.0.0.98")
+    app.run(debug=False, use_reloader=False, port=8000, host="10.0.0.98")
 
