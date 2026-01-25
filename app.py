@@ -97,7 +97,7 @@ def download():
         return jsonify({'error': 'Invalid URL'}), 400
 
      # Start the download as a background job
-    job = q.enqueue(download_media, youtube_url, format, quality)
+    job = q.enqueue(download_media, youtube_url, format, quality, app.config['COOKIE_FILE_PATH'])
     session['download_job_id'] = job.get_id()
     print(job.get_id())
 
