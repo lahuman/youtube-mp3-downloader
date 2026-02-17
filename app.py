@@ -17,12 +17,18 @@ app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_REDIS'] = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+# Redis 설정: 환경변수로 오버라이드 가능 (Docker 환경 고려)
+REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.environ.get('REDIS_PORT', '6379'))
+REDIS_DB = int(os.environ.get('REDIS_DB', '0'))
+
+app.config['SESSION_REDIS'] = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 
 Session(app)
 
 # Set up Redis Queue for background tasks
-r = redis.Redis()
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 q = Queue(connection=r, default_timeout=3600)
 
 logging.basicConfig()
@@ -147,8 +153,8 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    # 10.0.0.98 固定だとローカル環境によってはバインドできず
-    # "Can't assign requested address" が出ることがあるので、
-    # まずはローカル開発用に 127.0.0.1 で起動する。
-    app.run(debug=False, use_reloader=False, port=8000, host="127.0.0.1")
+    # 호스트/포트는 환경변수로 오버라이드 가능 (Docker 포함)
+    host = os.environ.get('FLASK_RUN_HOST', '0.0.0.0')
+    port = int(os.environ.get('FLASK_RUN_PORT', '8000'))
+    app.run(debug=False, use_reloader=False, port=port, host=host)
 
