@@ -5,6 +5,7 @@ import shutil
 from typing import Optional
 
 import yt_dlp
+from yt_dlp.utils import DownloadError, ExtractorError
 
 
 logger = logging.getLogger(__name__)
@@ -74,27 +75,11 @@ def download_video(
       }
     )
   elif format == "mp4":
-    if quality == "720p":
-      format_spec = (
-        "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/"
-        "best[height<=720][ext=mp4]"
-      )
-    elif quality == "1080p":
-      format_spec = (
-        "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/"
-        "best[height<=1080][ext=mp4]"
-      )
-    elif quality == "360p":
-      format_spec = (
-        "bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/"
-        "best[height<=360][ext=mp4]"
-      )
-    else:
-      format_spec = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]"
-
+    # 포맷 지정이 너무 타이트하면 특정 영상에서 "Requested format is not available"가 발생할 수 있으므로,
+    # yt_dlp의 기본 전략에 가깝게 단순화한다.
     ydl_opts.update(
       {
-        "format": format_spec,
+        "format": "bestvideo+bestaudio/best",
         "postprocessors": [
           {
             "key": "FFmpegVideoConvertor",
@@ -107,7 +92,7 @@ def download_video(
   try:
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
       ydl.download([video_url])
-  except yt_dlp.utils.DownloadError as e:
+  except (DownloadError, ExtractorError) as e:
     logger.error(f"Failed to download video {video_url}: {e}")
     return None
   except Exception as e:
