@@ -1,12 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Page Not Found</title>
-</head>
-<body>
-    <h1>404 Error - Page Not Found</h1>
-    <p>Sorry, the page you requested was not found.</p>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Page not found – YouTube downloader{% endblock %}
+
+{% block content %}
+  <section class="card-elevated text-center">
+    <p class="input-label mb-2">Error 404</p>
+    <h1 class="hero-title" style="font-size:1.6rem;">{{ t('error_404_title') }}</h1>
+    <p class="hero-subtitle mb-4">
+      {{ t('error_404_subtitle') }}
+    </p>
+    <button class="btn btn-primary-main" onclick="window.location='/'">{{ t('error_404_back') }}</button>
+  </section>
+{% endblock %}
 

@@ -1,244 +1,175 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-  <meta charset="UTF-8">
-  <title>YouTube MP3 Downloader</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <style>
-    body {
-      font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-      background-color: #f8f9fa;
-      color: #333;
-      margin-top: 30px;
-    }
+{% block title %}Confirm YouTube download – {{ video_info.title }}{% endblock %}
 
-    .container {
-      padding: 30px;
-    }
+{% block extra_head %}
+  <meta name="description" content="Download '{{ video_info.title }}' from YouTube as MP3 or MP4. Choose audio quality or video resolution and start the download in one click." />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "applicationCategory": "Multimedia",
+    "name": "YouTube MP3 & MP4 Downloader",
+    "description": "Web tool to convert YouTube videos like '{{ video_info.title }}' to MP3 or MP4.",
+    "operatingSystem": "Web",
+    "offers": {"@type": "Offer", "price": "0"}
+  }
+  </script>
+{% endblock %}
 
-    .card {
-      box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.14);
-      border: 0;
-      margin-bottom: 30px;
-    }
+{% block content %}
+  <section class="card-elevated">
+    <header class="mb-3">
+      <p class="input-label mb-1">{{ t('details_selected_video') }}</p>
+      <h2 class="h5 mb-1" style="color:#e5e7eb;">{{ video_info.title }}</h2>
+      {% if video_info.uploader %}
+        <p class="hero-subtitle mb-0" style="font-size:0.82rem;">{{ video_info.uploader }}</p>
+      {% endif %}
+    </header>
 
-    .card-header-primary {
-      background: linear-gradient(60deg, #ab47bc, #7b1fa2);
-      color: #fff;
-    }
-
-    .card-body {
-      padding: 15px;
-      position: relative;
-    }
-
-    .overlay {
-      position: fixed;
-      display: none;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1050;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-    }
-
-    #text {
-      font-size: 20px;
-      color: white;
-    }
-
-    #progressBarContainer {
-      width: 80%;
-      height: 30px;
-      background-color: #ddd;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-
-    #progressBar {
-      height: 100%;
-      width: 0%;
-      background-color: #007bff;
-      border-radius: 5px;
-      line-height: 30px;
-      color: white;
-      text-align: center;
-    }
-  </style>
-
-</head>
-
-<body>
-  <div id="overlay" class="overlay">
-    <div id="text">Processing, please wait...</div>
-    <div id="progressBarContainer">
-      <div id="progressBar">0%</div>
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="card">
-      <div class="card-header card-header-primary">
-        <h4 class="card-title">{{ video_info.title }}</h4>
-        <p class="card-category">{{ video_info.uploader }}</p>
+    <div class="row">
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="rounded overflow-hidden" style="border-radius:12px; border:1px solid rgba(148,163,184,0.35);">
+          <img src="{{ video_info.thumbnail }}" alt="Thumbnail for {{ video_info.title }}" class="img-fluid" loading="lazy" />
+        </div>
+        {% if video_info.duration %}
+          <p class="mt-2 mb-0" style="font-size:0.8rem; color:#9ca3af;">Duration: {{ video_info.duration }} seconds</p>
+        {% endif %}
       </div>
-      <div class="card-body">
-        <img src="{{ video_info.thumbnail }}" alt="Thumbnail" class="img-fluid mb-2">
-        <h5>Duration: {{ video_info.duration }} seconds</h5>
-        <form action="/download" method="POST" id="downloadForm" >
-          <input type="hidden" id="youtube_url" name="youtube_url" value="{{ video_info.url }}">
 
-          <!-- Dropdown for selecting format -->
-          <div class="mb-3">
-            <label for="format" class="form-label">Format:</label>
-            <select class="form-select" id="format" name="format">
-              <option value="mp3">MP3 - Audio</option>
-              <option value="mp4">MP4 - Video</option>
-            </select>
+      <div class="col-md-8">
+        <form action="/download" method="POST" id="downloadForm">
+          <input type="hidden" id="youtube_url" name="youtube_url" value="{{ video_info.url }}" />
+
+          <div class="form-row">
+            <div class="form-group col-sm-6">
+              <label for="format" class="input-label">{{ t('details_format') }}</label>
+              <select class="form-control form-control-sm" id="format" name="format" aria-label="Choose output format">
+                <option value="mp3">MP3 – Audio only</option>
+                <option value="mp4">MP4 – Video</option>
+              </select>
+            </div>
+
+            <div class="form-group col-sm-6">
+              <label for="quality" class="input-label">{{ t('details_quality') }}</label>
+              <select class="form-control form-control-sm" id="quality" name="quality" aria-label="Choose quality">
+                <option value="192">192 kbps</option>
+                <option value="256">256 kbps</option>
+                <option value="320">320 kbps</option>
+              </select>
+            </div>
           </div>
 
-          <!-- Dropdown for selecting quality -->
-          <div class="mb-3">
-            <label for="quality" class="form-label">Quality:</label>
-            <select class="form-select" id="quality" name="quality">
-              <option value="192">192 kbps</option>
-              <option value="256">256 kbps</option>
-              <option value="320">320 kbps</option>
-            </select>
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center mt-2">
+            <button type="submit" class="btn btn-primary-main mb-2 mb-md-0">
+              {{ t('details_start') }}
+            </button>
+            <button type="button" onclick="window.location='/'" class="btn btn-secondary-ghost">
+              {{ t('details_back') }}
+            </button>
           </div>
-          <div class="d-flex justify-content-between">
-            <button type="sumit" class="btn btn-primary btn-round">Download</button>
-            <button type="button" onclick="window.location='/'" class="btn btn-secondary btn-round">Go Back</button>
-          </div>
+
+          <p class="legal-disclaimer mb-0 mt-3">
+            {{ t('details_note') }}
+          </p>
         </form>
       </div>
     </div>
-    <p class="text-center text-danger">
-      <strong>Legal Disclaimer:</strong> You are solely responsible for ensuring that you have the right to download
-      content from YouTube. This service is provided for convenience and does not transfer any legal responsibility to
-      the service provider. By using this service, you agree to comply with all applicable laws and regulations
-      regarding content download.
-    </p>
-  </div>
+  </section>
+{% endblock %}
 
-  <!-- Bootstrap JS, Popper.js, and jQuery -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script>
-    if ('{{ video_info.duration }}' == 'None' || {{ video_info.duration }} >= (60 * 60 * 2)) {
-      alert('Videos longer than 2 hours or realtime cannot be processed!');
-      window.location.href = '/';
-    }
-    function validateYouTubeUrl() {
-      var url = document.getElementById('youtube_url').value;
-      var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
-      return pattern.test(url);
+{% block scripts %}
+<script>
+  if ('{{ video_info.duration }}' == 'None' || {{ video_info.duration or 0 }} >= (60 * 60 * 2)) {
+    alert('{{ t('alert_long_video') }}');
+    window.location.href = '/';
+  }
 
-    }
-    document.getElementById('format').addEventListener('change', function () {
-      let qualitySelect = document.getElementById('quality');
-      qualitySelect.innerHTML = '';
+  function validateYouTubeUrl() {
+    var url = document.getElementById('youtube_url').value;
+    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
+    return pattern.test(url);
+  }
 
-      if (this.value == 'mp3') {
-        qualitySelect.innerHTML = `
-            <option value="192">192 kbps</option>
-            <option value="256">256 kbps</option>`;
-      } else if (this.value == 'mp4') {
-        qualitySelect.innerHTML = `
-            <option value="360p">360p</option>
-            <option value="720p">720p</option>`;
-      }
-    });
-
-
-    function checkDownloadStatus(jobId) {
-
-      interval = setInterval(function () {
-        fetch(`/status/${jobId}`)
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === 'complete') {
-              window.location = '/serve_file';
-              alert('Begin Download');
-              hideOverlay()
-            } else if (data.status === 'failed') {
-              alert('Download failed!');
-              hideOverlay()
-            } else {
-              console.log('Download in progress...');
-              showOverlay()
-            }
-          })
-          .catch(error => console.error('Error:', error));
-      }, 5000);  // Check every 5 seconds
-    }
-
-    $('#downloadForm').on('submit', function (e) {
-      e.preventDefault(); // Prevent default form submission
-      showOverlay();
-      $.ajax({
-        type: $(this).attr('method'),
-        url: $(this).attr('action'),
-        data: $(this).serialize(),
-        success: function (response) {
-          if (response.job_id) {
-            checkDownloadStatus(response.job_id)
+  function checkDownloadStatus(jobId) {
+    let interval = setInterval(function () {
+      fetch(`/status/${jobId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'complete') {
+            window.location = '/serve_file';
+            alert("{{ t('alert_download_ready') }}");
+            hideOverlay();
+            clearInterval(interval);
+          } else if (data.status === 'failed') {
+            alert("{{ t('alert_download_failed') }}");
+            hideOverlay();
+            clearInterval(interval);
           } else {
-            alert('Error: File could not be downloaded.');
+            console.log('Download in progress...');
+            showOverlay();
           }
-        },
-        error: function () {
-          hideOverlay()
-          alert('Download failed.');
-        },
-        complete: function () {
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          hideOverlay();
+          clearInterval(interval);
+        });
+    }, 5000);
+  }
+
+  $('#downloadForm').on('submit', function (e) {
+    e.preventDefault();
+
+    if (!validateYouTubeUrl()) {
+      alert("{{ t('alert_invalid_url') }}");
+      return false;
+    }
+
+    showOverlay();
+
+    $.ajax({
+      type: $(this).attr('method'),
+      url: $(this).attr('action'),
+      data: $(this).serialize(),
+      success: function (response) {
+        if (response.job_id) {
+          checkDownloadStatus(response.job_id);
+        } else {
+          alert("{{ t('alert_download_error') }}");
+          hideOverlay();
         }
-      });
+      },
+      error: function () {
+        hideOverlay();
+        alert("{{ t('alert_download_failed') }}");
+      }
     });
+  });
 
-    let interval, width = 0;
-    function showOverlay() {
-      if (!validateYouTubeUrl()) {
-        alert("Please enter a valid YouTube URL.");
-        return false;
+  function showOverlay() {
+    const overlay = document.getElementById('overlay');
+    const progressBar = document.getElementById('progressBar');
+    overlay.style.display = 'flex';
+
+    let width = 0;
+    const interval = setInterval(() => {
+      if (width >= 96) {
+        clearInterval(interval);
+        return;
       }
-      clearMessages();
-      document.getElementById('overlay').style.display = 'flex';
-      let progressBar = document.getElementById('progressBar');
-      if (width >= 99) {
-        width = 80
-      } else {
-        if (width < 30) width += 8;
-        else if (width < 75) width += 5;
-        else width++;
+      if (width < 40) width += 7;
+      else if (width < 80) width += 4;
+      else width += 1;
+      progressBar.style.width = width + '%';
+    }, 220);
+  }
 
-        progressBar.style.width = width + '%';
-        progressBar.innerText = width + '%';
-      }
-      return true;
-    }
-
-    function clearMessages() {
-      const alerts = document.querySelectorAll('.alert');
-      alerts.forEach(alert => alert.style.display = 'none');
-    }
-
-    function hideOverlay() {
-      clearInterval(interval);
-      width = 0;
-      document.getElementById('overlay').style.display = 'none';
-      document.getElementById('progressBar').style.width = '0%';
-      document.getElementById('progressBar').innerText = '0%';
-    }
-  </script>
-</body>
-
-</html>
+  function hideOverlay() {
+    const overlay = document.getElementById('overlay');
+    const progressBar = document.getElementById('progressBar');
+    overlay.style.display = 'none';
+    progressBar.style.width = '0%';
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    container_name: youtube-mp3-web
+    ports:
+      - "8000:8000"
+    environment:
+      # Flask / Redis 설정
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      # 쿠키 파일 경로 (필요하면 호스트에서 마운트)
+      - COOKIE_FILE_PATH=/app/cookies.txt
+      # 세션 키는 필요에 따라 override 권장
+      - SECRET_KEY=helloWorldMyNameIslahuman!+_+
+    volumes:
+      - ./uploads:/app/uploads
+      # 호스트의 cookies.txt를 컨테이너로 마운트 (유튜브 로그인 쿠키)
+      - ./cookies.txt:/app/cookies.txt
+    depends_on:
+      - redis
+
+  worker:
+    build: .
+    container_name: youtube-mp3-worker
+    command: ["rq", "worker", "-u", "redis://redis:6379/0", "default"]
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - COOKIE_FILE_PATH=/app/cookies.txt
+      - SECRET_KEY=helloWorldMyNameIslahuman!+_+
+    volumes:
+      - ./uploads:/app/uploads
+      - ./cookies.txt:/app/cookies.txt
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: youtube-mp3-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
