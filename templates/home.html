@@ -1,167 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>YouTube MP3 Downloader</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
- body {
-            font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-            background-color: #f4f4f4;
-        }
-        .container {
-            padding-top: 40px;
-        }
-        .card {
-            margin-bottom: 20px;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .card-header {
-            background-color: #9c27b0;
-            color: #fff;
-            border-radius: 6px 6px 0 0;
-            padding: 10px 15px;
-            font-size: 20px;
-        }
-        .card-body {
-            padding: 15px;
-        }
-	 .form-group {
-            margin-bottom: 15px;
-        }
-        .btn-primary {
-            background-color: #9c27b0;
-            border: none;
-        }
-        .legal-disclaimer {
-            margin-top: 20px;
-            font-size: 0.8rem;
-            color: #666;
-        }
-        #overlay {
-            position: fixed;
-            display: none;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 2;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-        #text {
-            font-size: 20px;
-            color: white;
-        }
-        #progressBarContainer {
-            width: 80%;
-            height: 30px;
-            background-color: #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 20px;
-        }
-        #progressBar {
-            height: 100%;
-            width: 0%;
-            background-color: #007bff;
-            border-radius: 5px;
-            line-height: 30px; /* Vertically center the text inside the progress bar */
-            color: white;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <div id="overlay">
-        <div id="text">Processing, please wait...</div>
-        <div id="progressBarContainer">
-            <div id="progressBar">0%</div>
-        </div>
+{% extends "base.html" %}
+
+{% block title %}YouTube MP3 & MP4 Downloader – Fast, simple converter{% endblock %}
+
+{% block content %}
+  <section class="mb-3">
+    <div class="label-pill">
+      <span class="badge-dot"></span>
+      {{ t('hero_badge') }}
     </div>
+    <h1 class="hero-title">{{ t('hero_title') }}</h1>
+    <p class="hero-subtitle">
+      {{ t('hero_subtitle') }}
+    </p>
+  </section>
 
-    <div class="container">
-        <div class="card">
-            <div class="card-header">
-                Download YouTube as MP3
-            </div>
-            <div class="card-body">
-                {% for category, message in get_flashed_messages(with_categories=True) %}
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                {% endfor %}
-                <form action="/details" method="POST" id="downloadForm" onsubmit="return showOverlay()">
-                    <div class="form-group">
-                        <label for="youtube_url">YouTube URL:</label>
-                        <input type="text" class="form-control" id="youtube_url" name="youtube_url" placeholder="Enter YouTube URL here" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" onclick="return showOverlay()">Convert</button>
-                </form>
-            </div>
+  <section class="card-elevated">
+    {% for category, message in get_flashed_messages(with_categories=True) %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% endfor %}
+
+    <form action="/details" method="POST" id="downloadForm" onsubmit="return showOverlay()">
+      <div class="form-group mb-3">
+        <div class="input-label">{{ t('url_label') }}</div>
+        <input
+          type="url"
+          class="form-control form-control-url"
+          id="youtube_url"
+          name="youtube_url"
+          placeholder="{{ t('url_placeholder') }}"
+          required
+          aria-label="YouTube video URL"
+        />
+      </div>
+
+      <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center justify-content-between">
+        <button type="submit" class="btn btn-primary-main mb-2 mb-md-0">
+          {{ t('home_primary_cta') }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary-ghost"
+          onclick="document.getElementById('youtube_url').value=''; document.getElementById('youtube_url').focus();">
+          {{ t('home_clear') }}
+        </button>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <span class="feature-dot"></span>
+          {{ t('feature_mp3') }}
         </div>
-        <p class="text-center legal-disclaimer">
-            <strong>Legal Disclaimer:</strong> You are solely responsible for ensuring that you have the right to download content from YouTube. This service is provided for convenience and does not transfer any legal responsibility to the service provider. By using this service, you agree to comply with all applicable laws and regulations regarding content download.
-        </p>
-    </div>
+        <div class="feature-item">
+          <span class="feature-dot"></span>
+          {{ t('feature_mp4') }}
+        </div>
+        <div class="feature-item">
+          <span class="feature-dot"></span>
+          {{ t('feature_background') }}
+        </div>
+        <div class="feature-item">
+          <span class="feature-dot"></span>
+          {{ t('feature_cookie') }}
+        </div>
+      </div>
+    </form>
 
-    <script>
-        function validateYouTubeUrl() {
-            var url = document.getElementById('youtube_url').value;
-            var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
-            return pattern.test(url);
-        }
+    <p class="legal-disclaimer">
+      {{ t('legal_home') }}
+    </p>
+  </section>
+{% endblock %}
 
-        function showOverlay() {
-            if (!validateYouTubeUrl()) {
-                alert("Please enter a valid YouTube URL.");
-                return false;
-            }
-            clearMessages();
-            document.getElementById('overlay').style.display = 'flex';
-            let progressBar = document.getElementById('progressBar');
-            let width = 0;
-            let interval = setInterval(() => {
-                if (width >= 100) {
-                    clearInterval(interval);
-                    document.getElementById('overlay').style.display = 'none';
-                    progressBar.style.width = '0%'; // Reset progress bar
-                    progressBar.innerText = '0%'; // Reset progress text
-                } else {
-                    width++;
-                    progressBar.style.width = width + '%';
-                    progressBar.innerText = width + '%';
-                }
-            }, 200);
-            setTimeout(() => {
-                clearInterval(interval);
-                document.getElementById('overlay').style.display = 'none';
-                progressBar.style.width = '0%'; // Reset progress bar
-                progressBar.innerText = '0%'; // Reset progress text
-            }, 20000); // Maximum wait time 20 seconds
-            return true;
-        }
+{% block scripts %}
+<script>
+  function validateYouTubeUrl() {
+    var url = document.getElementById('youtube_url').value;
+    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
+    return pattern.test(url);
+  }
 
-        function clearMessages() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => alert.style.display = 'none');
-        }
-    </script>
-    <!-- Bootstrap JS, Popper.js, and jQuery -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+  function showOverlay() {
+    if (!validateYouTubeUrl()) {
+      alert('{{ t('alert_invalid_url') }}');
+      return false;
+    }
+    const overlay = document.getElementById('overlay');
+    const progressBar = document.getElementById('progressBar');
+    overlay.style.display = 'flex';
+
+    let width = 0;
+    const interval = setInterval(() => {
+      if (width >= 96) {
+        clearInterval(interval);
+        return;
+      }
+      if (width < 40) width += 7;
+      else if (width < 80) width += 4;
+      else width += 1;
+      progressBar.style.width = width + '%';
+    }, 220);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      overlay.style.display = 'none';
+      progressBar.style.width = '0%';
+    }, 20000);
+
+    return true;
+  }
+</script>
+{% endblock %}
 
