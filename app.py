@@ -29,7 +29,8 @@ logging.basicConfig()
 
 app.config['UPLOAD_FOLDER'] = 'uploads'  # 파일을 저장할 디렉토리 설정
 app.config['SECRET_KEY'] = 'helloWorldMyNameIslahuman!+_+'  # 세션에 대한 시크릿 키 설정
-app.config['COOKIE_FILE_PATH'] = '/applications/youtube2mp3/cookies.txt'  # 쿠키 파일 경로 설정
+# 쿠키 파일 경로 설정: 기본값은 ./cookies.txt, 환경변수 COOKIE_FILE_PATH로 오버라이드 가능
+app.config['COOKIE_FILE_PATH'] = os.environ.get('COOKIE_FILE_PATH', 'cookies.txt')
 
 # 폴더가 없다면 생성
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -39,9 +40,10 @@ def is_valid_youtube_url(url):
     """유투브 URL 검증. 추가 쿼리 파라미터를 고려하여 검증 로직 강화."""
     youtube_regex = (
         r'(https?://)?(www\.)?'
-        '(youtube\.com|youtu\.be)/'
-        '(watch\?v=|embed/|v/|.+\?v=)?([a-zA-Z0-9\-_]{11})'
-        '(&[a-zA-Z0-9\-=]*)*')  # 추가적인 쿼리 파라미터를 허용
+        r'(youtube\.com|youtu\.be)/'
+        r'(watch\?v=|embed/|v/|.+\?v=)?([a-zA-Z0-9\-_]{11})'
+        r'(&[a-zA-Z0-9\-=]*)*'  # 추가적인 쿼리 파라미터를 허용
+    )
     return re.match(youtube_regex, url)
 
 
@@ -65,15 +67,21 @@ def details():
         return redirect(url_for('home'))
 
 def get_video_info(url):
+    # 영상 정보만 조회할 때는 포맷을 강제할 필요가 없으므로
+    # format 옵션은 제거한다. (일부 영상에서 "Requested format is not available" 에러를 유발)
     ydl_opts = {
-        'format': 'best',
         'quiet': True,
         'no_warnings': True,
-        'cookiefile': app.config['COOKIE_FILE_PATH']
     }
+    cookie_path = app.config.get('COOKIE_FILE_PATH')
+    if cookie_path and os.path.exists(cookie_path):
+        ydl_opts['cookiefile'] = cookie_path
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            info_dict = ydl.extract_info(url, download=False)
+            # process=False 로 설정해 포맷 선택 과정을 건너뛰고
+            # 원시 메타데이터만 가져온다. (일부 영상에서 "Requested format is not available" 회피)
+            info_dict = ydl.extract_info(url, download=False, process=False)
             video_info = {
                 'id': info_dict.get('id'),
                 'url': url,
@@ -108,8 +116,13 @@ def check_status(job_id):
     job = Job.fetch(job_id, connection=r)
 
     if job.is_finished:
-        session['download_path'] = job.result 
-        return jsonify({'status': 'complete'}), 200
+        # download_media 가 실제 파일 경로(문자열)를 반환했을 때만 성공 처리
+        if job.result and isinstance(job.result, str) and os.path.exists(job.result):
+            session['download_path'] = job.result
+            return jsonify({'status': 'complete'}), 200
+        else:
+            session['download_path'] = None
+            return jsonify({'status': 'failed'}), 202
     elif job.is_failed:
         session['download_path'] = None
         return jsonify({'status': 'failed'}), 202
@@ -119,8 +132,8 @@ def check_status(job_id):
 
 @app.route('/serve_file')
 def serve_file():
-    if 'download_path' in session:
-        path_to_file = session['download_path']
+    path_to_file = session.get('download_path')
+    if path_to_file and os.path.exists(path_to_file):
         return send_file(path_to_file, as_attachment=True)
     return "File not found", 404
 
@@ -134,5 +147,8 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    app.run(debug=False, use_reloader=False, port=8000, host="10.0.0.98")
+    # 10.0.0.98 固定だとローカル環境によってはバインドできず
+    # "Can't assign requested address" が出ることがあるので、
+    # まずはローカル開発用に 127.0.0.1 で起動する。
+    app.run(debug=False, use_reloader=False, port=8000, host="127.0.0.1")
 
