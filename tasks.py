@@ -80,11 +80,23 @@ def download_video(
       }
     )
   elif format == "mp4":
-    # 포맷 지정이 너무 타이트하면 특정 영상에서 "Requested format is not available"가 발생할 수 있으므로,
-    # yt_dlp의 기본 전략에 가깝게 단순화한다.
+    # UI에서 선택한 해상도(360p/720p 등)에 따라 포맷을 제한한다.
+    # 기본값이나 알 수 없는 값이 들어오면 best 로 fallback.
+    height = None
+    if quality.endswith("p") and quality[:-1].isdigit():
+      try:
+        height = int(quality[:-1])
+      except ValueError:
+        height = None
+
+    if height:
+      fmt = f"bv*[height<={height}]+ba/best[height<={height}]"
+    else:
+      fmt = "bestvideo+bestaudio/best"
+
     ydl_opts.update(
       {
-        "format": "bestvideo+bestaudio/best",
+        "format": fmt,
         "postprocessors": [
           {
             "key": "FFmpegVideoConvertor",
