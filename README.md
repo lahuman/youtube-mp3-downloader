@@ -9,19 +9,30 @@ YouTube MP3 Downloader는 사용자가 YouTube 동영상의 URL을 입력하면 
 - 1차 단순 mp3 다운로드 기능 개발 **24.4.19**
 - mp4 다운로드 기능 개발 **24.4.20**
 - [python-rq](https://python-rq.org/) 를 활용한 다운로드 tasks 적용 **24.4.29**
+- Docker 기반 `web + worker + redis` 구성 추가, X86/ARM 환경에서 쉽게 배포 가능 **24.4.XX**
+- i18n(다국어) 지원 추가: **한국어/영어/일본어** UI 및 SEO 메타 적용 **24.4.XX**
+- yt-dlp EJS/SABR 대응: deno 런타임 + EJS remote components 설정으로 최신 YouTube 보호 방식 일부 지원 **24.4.XX**
+- MP4 해상도 선택 기능 추가: **360p / 720p** 선택 시 yt-dlp 포맷에 실제 반영 **24.4.XX**
 
 ## 주요 기능
-- YouTube 동영상 URL을 통한 MP3 파일 생성 및 다운로드
-- 가상 환경에서 실행을 위한 설정 포함
-- 실시간 동영상 처리 및 다운로드
+- YouTube 동영상 URL을 통한 MP3/MP4 파일 생성 및 다운로드
+- MP4 다운로드 시 360p / 720p 해상도 선택 지원
+- yt-dlp + ffmpeg 기반 고품질 오디오/비디오 추출
+- [python-rq](https://python-rq.org/) + Redis 기반 비동기 다운로드 처리(브라우저 멈춤 방지)
+- Docker Compose로 `web (Flask + gunicorn) / worker / redis` 한 번에 배포 가능
+- i18n 지원: 한국어 / 영어 / 일본어 UI 및 메타 태그로 기본 SEO 고려
 
 ## 시작하기
 
 ### 필요 조건
-프로젝트를 실행하기 전에 다음 소프트웨어가 설치되어 있어야 합니다:
+프로젝트를 실행하기 전에 다음 소프트웨어가 설치되어 있어야 합니다 (로컬 실행 기준):
 - Python 3.8 이상
 - pip (Python 패키지 관리자)
-- redis 
+- redis
+
+또는 Docker 환경에서 실행할 경우:
+- Docker
+- Docker Compose
 
 ### 설치 방법
 
@@ -40,17 +51,29 @@ $ pip install -r requirements.txt
 ```
 
 
-3. 웹 애플리케이션 실행:
+3. 웹 애플리케이션 실행 (로컬 실행 예시):
 
 ```bash
-# rq worker 실행
+# rq worker 실행 (Redis가 localhost:6379에서 떠 있어야 함)
 $ rq worker --with-scheduler &
+
+# Flask 앱 실행
 $ python app.py
 ```
 
+또는 Docker Compose를 사용하는 경우:
+
+```bash
+$ docker compose up -d --build
+```
+
+- web: `http://localhost:8000` (gunicorn + Flask)
+- worker: RQ 기반 비동기 다운로드 처리
+- redis: 큐/세션 스토리지
 
 ## 사용 방법
-웹 브라우저에서 `http://localhost:5000`으로 접속하여 YouTube 동영상 URL을 입력하고, 'Download' 버튼을 클릭하여 MP3 파일을 다운로드 받습니다.
+웹 브라우저에서 `http://localhost:8000` (또는 배포된 도메인) 으로 접속하여 YouTube 동영상 URL을 입력하고,
+포맷(MP3/MP4)과 품질(오디오 비트레이트 또는 영상 해상도)을 선택한 뒤 'Download'를 클릭해서 파일을 다운로드 받을 수 있습니다.
 
 ## 기여하기
 이 프로젝트에 기여하고 싶은 개발자는 다음 방법을 통해 기여할 수 있습니다:
