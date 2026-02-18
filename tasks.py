@@ -58,7 +58,8 @@ def download_video(
     "outtmpl": output_path + ".%(ext)s",
     # EJS/SABR 대응: deno 런타임 + EJS challenge solver 스크립트 사용
     # 참고: https://github.com/yt-dlp/yt-dlp/wiki/EJS
-    "js_runtimes": ["deno"],
+    # js_runtimes 형식은 {runtime: {config}} 딕셔너리여야 한다.
+    "js_runtimes": {"deno": {}},
     "remote_components": ["ejs:npm"],
   }
 

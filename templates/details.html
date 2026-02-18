@@ -91,6 +91,30 @@
     return pattern.test(url);
   }
 
+  // 포맷에 따라 품질 옵션 동적으로 변경 (오디오/비디오)
+  function updateQualityOptions() {
+    var format = document.getElementById('format').value;
+    var qualitySelect = document.getElementById('quality');
+    qualitySelect.innerHTML = '';
+
+    if (format === 'mp3') {
+      qualitySelect.insertAdjacentHTML('beforeend', '\
+        <option value="192">192 kbps</option>\
+        <option value="256">256 kbps</option>\
+        <option value="320">320 kbps</option>\
+      ');
+    } else if (format === 'mp4') {
+      qualitySelect.insertAdjacentHTML('beforeend', '\
+        <option value="360p">360p</option>\
+        <option value="720p">720p</option>\
+      ');
+    }
+  }
+
+  document.getElementById('format').addEventListener('change', updateQualityOptions);
+  // 초기 로드 시 기본 옵션 세팅
+  updateQualityOptions();
+
   function checkDownloadStatus(jobId) {
     let interval = setInterval(function () {
       fetch(`/status/${jobId}`)
