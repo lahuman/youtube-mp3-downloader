@@ -56,6 +56,10 @@ def download_video(
     "quiet": False,
     "verbose": True,
     "outtmpl": output_path + ".%(ext)s",
+    # EJS/SABR 대응: deno 런타임 + EJS challenge solver 스크립트 사용
+    # 참고: https://github.com/yt-dlp/yt-dlp/wiki/EJS
+    "js_runtimes": ["deno"],
+    "remote_components": ["ejs:npm"],
   }
 
   if cookie_file:
