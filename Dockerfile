@@ -37,5 +37,5 @@ RUN mkdir -p uploads
 
 EXPOSE 8000
 
-# 기본은 gunicorn으로 서비스
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app"]
+# 기본은 gunicorn으로 서비스 (타임아웃 여유를 위해 90초로 설정)
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "--timeout", "90", "app:app"]
