@@ -209,6 +209,25 @@ def is_valid_youtube_url(url):
     return re.match(youtube_regex, url)
 
 
+def normalize_youtube_url(url: str) -> str:
+    """여러 파라미터가 붙은 YouTube URL을 단일 영상 URL로 정규화.
+
+    예: https://www.youtube.com/watch?v=pcjR7EHyiaE&list=...&start_radio=1
+        → https://www.youtube.com/watch?v=pcjR7EHyiaE
+    """
+    youtube_regex = (
+        r'(https?://)?(www\.)?'
+        r'(youtube\.com|youtu\.be)/'
+        r'(watch\?v=|embed/|v/|.+\?v=)?([a-zA-Z0-9\-_]{11})'
+    )
+    m = re.match(youtube_regex, url)
+    if not m:
+        return url
+
+    video_id = m.group(5)
+    return f"https://www.youtube.com/watch?v={video_id}"
+
+
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -220,7 +239,10 @@ def details():
     if not youtube_url or not is_valid_youtube_url(youtube_url):
         flash('Invalid YouTube URL.', category='error')
         return redirect(url_for('home'))
-    
+
+    # 플레이리스트/ラジオ形式のURLでも単一動画として扱えるよう 정규화
+    youtube_url = normalize_youtube_url(youtube_url)
+
     video_info = get_video_info(youtube_url)
     if video_info:
         return render_template('details.html', video_info=video_info, youtube_url=youtube_url)
@@ -266,7 +288,10 @@ def download():
     if not youtube_url or not is_valid_youtube_url(youtube_url):
         return jsonify({'error': 'Invalid URL'}), 400
 
-     # Start the download as a background job
+    # 플레이리스트/ラジオ形式のURL에서도 단일 영상 ID만 추출해 사용
+    youtube_url = normalize_youtube_url(youtube_url)
+
+    # Start the download as a background job
     job = q.enqueue(download_media, youtube_url, format, quality, app.config['COOKIE_FILE_PATH'])
     session['download_job_id'] = job.get_id()
     print(job.get_id())
