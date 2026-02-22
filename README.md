@@ -15,14 +15,23 @@ YouTube MP3 Downloader는 사용자가 YouTube 동영상의 URL을 입력하면 
 - MP4 해상도 선택 기능 추가: **360p / 720p** 선택 시 yt-dlp 포맷에 실제 반영 **24.4.XX**
 - 다운로드 진행률(%) 표시 및 상태 폴링 개선: Redis + RQ job 기반으로 실시간 진행률 노출, 모바일에서 진행 상태를 명확히 확인 가능 **25.2.XX**
 - YouTube Shorts URL 지원: `/shorts/<id>` 형태 URL을 자동으로 `watch?v=<id>` URL로 정규화하여 일반 영상과 동일하게 처리 **25.2.XX**
+- 다운로드 가능한 YouTube 영상 길이 제한 변경: 서버 부하 방지를 위해 최대 **10분** 이내 영상만 다운로드 가능하도록 필터링 추가 **26.2.22**
 
 ## 주요 기능
-- YouTube 동영상 URL을 통한 MP3/MP4 파일 생성 및 다운로드
+- YouTube 동영상 URL을 통한 MP3/MP4 파일 생성 및 다운로드 (환경 변수 `MAX_DURATION_SECONDS`를 통해 제한 시간 설정 가능, 기본값 10분)
 - MP4 다운로드 시 360p / 720p 해상도 선택 지원
 - yt-dlp + ffmpeg 기반 고품질 오디오/비디오 추출
 - [python-rq](https://python-rq.org/) + Redis 기반 비동기 다운로드 처리(브라우저 멈춤 방지)
 - Docker Compose로 `web (Flask + gunicorn) / worker / redis` 한 번에 배포 가능
 - i18n 지원: 한국어 / 영어 / 일본어 UI 및 메타 태그로 기본 SEO 고려
+
+## 환경 변수 설정
+프로젝트 실행 시 다음 환경 변수를 통해 동작을 제어할 수 있습니다:
+- `REDIS_HOST`: Redis 서버 호스트 (기본값: `localhost`)
+- `REDIS_PORT`: Redis 서버 포트 (기본값: `6379`)
+- `REDIS_DB`: Redis 데이터베이스 인덱스 (기본값: `0`)
+- `MAX_DURATION_SECONDS`: 다운로드 가능한 최대 영상 길이 (초 단위, 기본값: `600`)
+- `COOKIE_FILE_PATH`: 유튜브 쿠키 파일 경로 (기본값: `cookies.txt`)
 
 ## 시작하기
 
