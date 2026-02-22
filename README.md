@@ -13,6 +13,8 @@ YouTube MP3 Downloader는 사용자가 YouTube 동영상의 URL을 입력하면 
 - i18n(다국어) 지원 추가: **한국어/영어/일본어** UI 및 SEO 메타 적용 **24.4.XX**
 - yt-dlp EJS/SABR 대응: deno 런타임 + EJS remote components 설정으로 최신 YouTube 보호 방식 일부 지원 **24.4.XX**
 - MP4 해상도 선택 기능 추가: **360p / 720p** 선택 시 yt-dlp 포맷에 실제 반영 **24.4.XX**
+- 다운로드 진행률(%) 표시 및 상태 폴링 개선: Redis + RQ job 기반으로 실시간 진행률 노출, 모바일에서 진행 상태를 명확히 확인 가능 **25.2.XX**
+- YouTube Shorts URL 지원: `/shorts/<id>` 형태 URL을 자동으로 `watch?v=<id>` URL로 정규화하여 일반 영상과 동일하게 처리 **25.2.XX**
 
 ## 주요 기능
 - YouTube 동영상 URL을 통한 MP3/MP4 파일 생성 및 다운로드
