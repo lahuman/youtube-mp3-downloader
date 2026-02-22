@@ -59,6 +59,10 @@ TRANSLATIONS = {
         "details_note": "Downloads longer than 2 hours or realtime/live streams may fail or be blocked to prevent overload.",
         "footer_notice": "This tool is provided for personal, lawful use only. Please respect YouTube's Terms of Service and copyright laws in your country.",
         "overlay_text": "Preparing your download…",
+        "overlay_downloading": "Downloading…",
+        "overlay_converting": "Converting file… almost done.",
+        "overlay_complete": "Download ready (100%)",
+        "overlay_failed": "Download failed.",
         "error_404_title": "We couldn’t find that page.",
         "error_404_subtitle": "The link you followed may be broken, or the page may have been removed.",
         "error_404_back": "Back to downloader",
@@ -102,6 +106,10 @@ TRANSLATIONS = {
         "details_note": "2시간이 넘는 영상이나 실시간 스트림은 서버 보호를 위해 제한되거나 실패할 수 있습니다.",
         "footer_notice": "이 도구는 개인·합법적인 사용에 한해 제공됩니다. 항상 YouTube 이용약관과 각 국가의 저작권 법을 지켜 주세요.",
         "overlay_text": "다운로드를 준비하고 있습니다…",
+        "overlay_downloading": "다운로드 중…",
+        "overlay_converting": "파일 변환 중… 거의 다 됐어요.",
+        "overlay_complete": "다운로드 준비 완료 (100%)",
+        "overlay_failed": "다운로드에 실패했습니다.",
         "error_404_title": "요청하신 페이지를 찾을 수 없습니다.",
         "error_404_subtitle": "링크가 잘못되었거나, 페이지가 삭제되었을 수 있습니다.",
         "error_404_back": "다운로더로 돌아가기",
@@ -145,6 +153,11 @@ TRANSLATIONS = {
         "details_note": "2 時間を超える動画やライブ配信は、負荷対策のため制限または失敗する場合があります。",
         "footer_notice": "本ツールは個人的かつ合法的な利用に限定して提供されます。YouTube の利用規約と各国の著作権法を必ず守ってください。",
         "overlay_text": "ダウンロードの準備中です…",
+        "overlay_downloading": "ダウンロード中…",
+        "overlay_converting": "ファイル変換中… ほぼ完了です。",
+        "overlay_complete": "ダウンロードの準備が完了しました（100％）",
+        "overlay_failed": "ダウンロードに失敗しました。",
+
         "error_3740_title": "ページが見つかりませんでした。",
         "error_3740_subtitle": "リンクが間違っているか、このページは削除された可能性があります。",
         "error_3740_back": "ダウンローダーへ戻る",
@@ -333,21 +346,26 @@ def get_progress(job_id: str):
 @app.route('/status/<job_id>')
 def check_status(job_id):
     job = Job.fetch(job_id, connection=r)
-    progress = get_progress(job_id) or {"status": "in_progress", "percent": 0.0}
+    progress = get_progress(job_id) or {"status": "downloading", "percent": 0.0}
 
     if job.is_finished:
         # download_media 가 실제 파일 경로(문자열)를 반환했을 때만 성공 처리
         if job.result and isinstance(job.result, str) and os.path.exists(job.result):
             session['download_path'] = job.result
-            return jsonify({'status': 'complete', 'percent': 100.0}), 200
+            return jsonify({'status': 'complete', 'phase': 'complete', 'percent': 100.0}), 200
         else:
             session['download_path'] = None
-            return jsonify({'status': 'failed', 'percent': progress.get('percent', 0.0)}), 202
+            return jsonify({'status': 'failed', 'phase': progress.get('status', 'failed'), 'percent': progress.get('percent', 0.0)}), 202
     elif job.is_failed:
         session['download_path'] = None
-        return jsonify({'status': 'failed', 'percent': progress.get('percent', 0.0)}), 202
+        return jsonify({'status': 'failed', 'phase': progress.get('status', 'failed'), 'percent': progress.get('percent', 0.0)}), 202
     else:
-        return jsonify({'status': 'in_progress', 'percent': progress.get('percent', 0.0)}), 202
+        # 진행 중인 경우, Redis에 저장된 phase/status/percent 를 그대로 반환
+        return jsonify({
+            'status': 'in_progress',
+            'phase': progress.get('status', 'downloading'),
+            'percent': progress.get('percent', 0.0),
+        }), 202
 
 
 @app.route('/serve_file')
