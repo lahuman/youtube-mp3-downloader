@@ -115,23 +115,44 @@
   // 초기 로드 시 기본 옵션 세팅
   updateQualityOptions();
 
+  function updateProgress(percent, status) {
+    const overlay = document.getElementById('overlay');
+    const progressBar = document.getElementById('progressBar');
+    const statusText = document.getElementById('overlay-text');
+    overlay.style.display = 'flex';
+
+    const p = Math.max(0, Math.min(100, percent || 0));
+    progressBar.style.width = p + '%';
+
+    if (status === 'complete') {
+      statusText.textContent = `다운로드 준비 완료 (100%)`;
+    } else if (status === 'failed') {
+      statusText.textContent = `다운로드 실패`;
+    } else {
+      statusText.textContent = `다운로드 중... ${p.toFixed(1)}%`;
+    }
+  }
+
   function checkDownloadStatus(jobId) {
     let interval = setInterval(function () {
       fetch(`/status/${jobId}`)
         .then(response => response.json())
         .then(data => {
+          const percent = data.percent || 0;
           if (data.status === 'complete') {
+            updateProgress(100, 'complete');
             window.location = '/serve_file';
             alert("{{ t('alert_download_ready') }}");
             hideOverlay();
             clearInterval(interval);
           } else if (data.status === 'failed') {
+            updateProgress(percent, 'failed');
             alert("{{ t('alert_download_failed') }}");
             hideOverlay();
             clearInterval(interval);
           } else {
-            console.log('Download in progress...');
-            showOverlay();
+            console.log('Download in progress...', percent);
+            updateProgress(percent, 'in_progress');
           }
         })
         .catch(error => {
@@ -173,27 +194,16 @@
 
   function showOverlay() {
     const overlay = document.getElementById('overlay');
-    const progressBar = document.getElementById('progressBar');
     overlay.style.display = 'flex';
-
-    let width = 0;
-    const interval = setInterval(() => {
-      if (width >= 96) {
-        clearInterval(interval);
-        return;
-      }
-      if (width < 40) width += 7;
-      else if (width < 80) width += 4;
-      else width += 1;
-      progressBar.style.width = width + '%';
-    }, 220);
   }
 
   function hideOverlay() {
     const overlay = document.getElementById('overlay');
     const progressBar = document.getElementById('progressBar');
+    const statusText = document.getElementById('overlay-text');
     overlay.style.display = 'none';
     progressBar.style.width = '0%';
+    statusText.textContent = "{{ t('overlay_text') }}";
   }
 </script>
 {% endblock %}
