@@ -142,12 +142,25 @@
   }
 
   function checkDownloadStatus(jobId) {
+    let visualPercent = 0;
+
     let interval = setInterval(function () {
       fetch(`/status/${jobId}`)
         .then(response => response.json())
         .then(data => {
-          const percent = data.percent || 0;
+          const backendPercent = data.percent || 0;
           const phase = data.phase || 'downloading';
+
+          if (phase === 'downloading') {
+            // 다운로드 단계에서는 서버가 주는 퍼센트를 그대로 사용 (0~50%)
+            visualPercent = backendPercent;
+          } else if (phase === 'converting') {
+            // 변환 단계에서는 50~99% 사이에서 천천히 증가시키되,
+            // 이미 서버 퍼센트가 더 크면 그 값을 따라간다.
+            const target = Math.max(backendPercent, 99);
+            visualPercent = Math.min(target, visualPercent + 2);
+          }
+
           if (data.status === 'complete') {
             updateProgress(100, 'complete');
             window.location = '/serve_file';
@@ -155,13 +168,13 @@
             hideOverlay();
             clearInterval(interval);
           } else if (data.status === 'failed') {
-            updateProgress(percent, 'failed');
+            updateProgress(visualPercent || backendPercent, 'failed');
             alert("{{ t('alert_download_failed') }}");
             hideOverlay();
             clearInterval(interval);
           } else {
-            console.log('Download in progress...', phase, percent);
-            updateProgress(percent, phase);
+            console.log('Download in progress...', phase, backendPercent, visualPercent);
+            updateProgress(visualPercent || backendPercent, phase);
           }
         })
         .catch(error => {
@@ -169,7 +182,7 @@
           hideOverlay();
           clearInterval(interval);
         });
-    }, 5000);
+    }, 3000);
   }
 
   $('#downloadForm').on('submit', function (e) {
