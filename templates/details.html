@@ -116,7 +116,12 @@
   // 초기 로드 시 기본 옵션 세팅
   updateQualityOptions();
 
-  function updateProgress(percent, status) {
+  const textDownloading = "{{ t('overlay_downloading') }}";
+  const textConverting = "{{ t('overlay_converting') }}";
+  const textComplete = "{{ t('overlay_complete') }}";
+  const textFailed = "{{ t('overlay_failed') }}";
+
+  function updateProgress(percent, phase) {
     const overlay = document.getElementById('overlay');
     const progressBar = document.getElementById('progressBar');
     const statusText = document.getElementById('overlay-text');
@@ -125,12 +130,14 @@
     const p = Math.max(0, Math.min(100, percent || 0));
     progressBar.style.width = p + '%';
 
-    if (status === 'complete') {
-      statusText.textContent = `다운로드 준비 완료 (100%)`;
-    } else if (status === 'failed') {
-      statusText.textContent = `다운로드 실패`;
+    if (phase === 'complete') {
+      statusText.textContent = textComplete;
+    } else if (phase === 'failed') {
+      statusText.textContent = textFailed;
+    } else if (phase === 'converting') {
+      statusText.textContent = textConverting + ' ' + p.toFixed(1) + '%';
     } else {
-      statusText.textContent = `다운로드 중... ${p.toFixed(1)}%`;
+      statusText.textContent = textDownloading + ' ' + p.toFixed(1) + '%';
     }
   }
 
@@ -140,6 +147,7 @@
         .then(response => response.json())
         .then(data => {
           const percent = data.percent || 0;
+          const phase = data.phase || 'downloading';
           if (data.status === 'complete') {
             updateProgress(100, 'complete');
             window.location = '/serve_file';
@@ -152,8 +160,8 @@
             hideOverlay();
             clearInterval(interval);
           } else {
-            console.log('Download in progress...', percent);
-            updateProgress(percent, 'in_progress');
+            console.log('Download in progress...', phase, percent);
+            updateProgress(percent, phase);
           }
         })
         .catch(error => {

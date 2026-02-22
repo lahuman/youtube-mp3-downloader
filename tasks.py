@@ -72,13 +72,16 @@ def make_progress_hook(job_id: Optional[str]):
       total = d.get("total_bytes") or d.get("total_bytes_estimate")
       downloaded = d.get("downloaded_bytes", 0)
       if total:
-        percent = downloaded / total * 100.0
+        # 전체 100% 중 다운로드 단계는 0~90%를 차지하도록 매핑
+        raw_percent = downloaded / total * 100.0
+        percent = raw_percent * 0.9
       else:
         percent = 0.0
-      set_progress(job_id, "in_progress", percent)
+      set_progress(job_id, "downloading", percent)
     elif status == "finished":
-      # 후속 후처리(컨버전 등)를 고려해 99%로만 올려둔다.
-      set_progress(job_id, "in_progress", 99.0)
+      # 네트워크 다운로드는 끝났고, 이후 ffmpeg 등 변환 단계로 진입
+      # 다운로드 단계의 상한선을 90%로 고정
+      set_progress(job_id, "converting", 90.0)
 
   return hook
 
@@ -238,8 +241,8 @@ def download_media(
   job = get_current_job()
   job_id = job.id if job else None
 
-  # 초기 진행률 0%로 설정
-  set_progress(job_id, "in_progress", 0.0)
+  # 초기 진행률 0%로 설정 (다운로드 단계 시작)
+  set_progress(job_id, "downloading", 0.0)
 
   duration = info_dict.get("duration", 0) or 0
   if duration == 0 or duration > 60 * 60 * 2:
@@ -277,6 +280,10 @@ def download_media(
   if final_path is None:
     set_progress(job_id, "failed", 0.0)
     return None
+
+  # 변환(포스트프로세싱) 단계는 다운로드 이후 ~ 완료까지 90~100% 구간으로 표시
+  # 여기서는 세부 진행률을 알 수 없으므로, 95%로 한 번 올려두고 최종 완료 시 100%로 마무리한다.
+  set_progress(job_id, "converting", 95.0)
 
   # 확장자가 예상과 다를 경우에도 target_path 로 맞춰주는 것이 깔끔할 수 있음
   if final_path != target_path and os.path.exists(final_path):
