@@ -80,7 +80,9 @@
 <script>
   function validateYouTubeUrl() {
     var url = document.getElementById('youtube_url').value;
-    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
+    // 서버에서 shorts / watch / youtu.be 모두 정규화하므로,
+    // 클라이언트에서는 "youtube 도메인 + 11자리 ID" 정도만 느슨하게 검증한다.
+    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/[a-zA-Z0-9_\-/?=&]+$/;
     return pattern.test(url);
   }
 

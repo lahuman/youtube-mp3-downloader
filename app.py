@@ -145,12 +145,12 @@ TRANSLATIONS = {
         "details_note": "2 時間を超える動画やライブ配信は、負荷対策のため制限または失敗する場合があります。",
         "footer_notice": "本ツールは個人的かつ合法的な利用に限定して提供されます。YouTube の利用規約と各国の著作権法を必ず守ってください。",
         "overlay_text": "ダウンロードの準備中です…",
-        "error_404_title": "ページが見つかりませんでした。",
-        "error_404_subtitle": "リンクが間違っているか、このページは削除された可能性があります。",
-        "error_404_back": "ダウンローダーへ戻る",
+        "error_3740_title": "ページが見つかりませんでした。",
+        "error_3740_subtitle": "リンクが間違っているか、このページは削除された可能性があります。",
+        "error_3740_back": "ダウンローダーへ戻る",
         "error_500_title": "サーバー側でエラーが発生しました。",
         "error_500_subtitle": "リクエスト処理中に問題が発生しました。しばらくしてからもう一度お試しください。",
-        "error_500_back": "ダウンローダーへ戻る",
+        "error_500_back": "ダウンローダーへ",
         "lang_label": "言語",
         "lang_en": "English",
         "lang_ko": "한국어",
@@ -198,13 +198,18 @@ app.config['COOKIE_FILE_PATH'] = os.environ.get('COOKIE_FILE_PATH', 'cookies.txt
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
+
 def is_valid_youtube_url(url):
-    """유투브 URL 검증. 추가 쿼리 파라미터를 고려하여 검증 로직 강화."""
+    """유투브 URL 검증.
+
+    - 일반 watch / embed / v / youtu.be 형식
+    - shorts 형식 (https://www.youtube.com/shorts/<id>) 도 허용
+    """
     youtube_regex = (
         r'(https?://)?(www\.)?'
         r'(youtube\.com|youtu\.be)/'
-        r'(watch\?v=|embed/|v/|.+\?v=)?([a-zA-Z0-9\-_]{11})'
-        r'(&[a-zA-Z0-9\-=]*)*'  # 추가적인 쿼리 파라미터를 허용
+        r'(watch\?v=|embed/|v/|shorts/|.+\?v=)?([a-zA-Z0-9\-_]{11})'
+        r'(&[a-zA-Z0-9\-=]*)*'
     )
     return re.match(youtube_regex, url)
 
@@ -212,9 +217,15 @@ def is_valid_youtube_url(url):
 def normalize_youtube_url(url: str) -> str:
     """여러 파라미터가 붙은 YouTube URL을 단일 영상 URL로 정규화.
 
-    예: https://www.youtube.com/watch?v=pcjR7EHyiaE&list=...&start_radio=1
-        → https://www.youtube.com/watch?v=pcjR7EHyiaE
+    - shorts URL도 watch?v=<id> 형태로 정규화한다.
     """
+    # 1) shorts 전용 패턴 먼저 처리
+    m = re.match(r'(https?://)?(www\.)?youtube\.com/shorts/([a-zA-Z0-9\-_]{11})', url)
+    if m:
+        video_id = m.group(3)
+        return f"https://www.youtube.com/watch?v={video_id}"
+
+    # 2) 기존 watch/embed/youtu.be 패턴 처리
     youtube_regex = (
         r'(https?://)?(www\.)?'
         r'(youtube\.com|youtu\.be)/'
@@ -228,7 +239,6 @@ def normalize_youtube_url(url: str) -> str:
     return f"https://www.youtube.com/watch?v={video_id}"
 
 
-
 @app.route('/', methods=['GET', 'POST'])
 def home():
     return render_template('home.html')
@@ -240,7 +250,7 @@ def details():
         flash('Invalid YouTube URL.', category='error')
         return redirect(url_for('home'))
 
-    # 플레이리스트/ラジオ形式のURLでも単一動画として扱えるよう 정규화
+    # 플레이리스트/ラジオ形式のURLでも 단일 영상으로 처리할 수 있도록 정규화
     youtube_url = normalize_youtube_url(youtube_url)
 
     video_info = get_video_info(youtube_url)
@@ -249,6 +259,7 @@ def details():
     else:
         flash('Could not retrieve video details.', category='error')
         return redirect(url_for('home'))
+
 
 def get_video_info(url):
     # 영상 정보만 조회할 때는 포맷을 강제할 필요가 없으므로
@@ -279,6 +290,7 @@ def get_video_info(url):
             print(f"Error retrieving video info: {e}")
             return None
 
+
 @app.route('/download', methods=['POST'])
 def download():
     youtube_url = request.form['youtube_url']
@@ -297,6 +309,7 @@ def download():
     print(job.get_id())
 
     return jsonify({'message': 'Download started', 'job_id': job.get_id()}), 202
+
 
 def get_progress(job_id: str):
     """Redis에 저장된 진행률/상태 정보를 조회.
@@ -349,13 +362,14 @@ def serve_file():
 def not_found_error(error):
     return render_template('404.html'), 404
 
+
 @app.errorhandler(500)
 def internal_error(error):
     return render_template('500.html'), 500
+
 
 if __name__ == '__main__':
     # 호스트/포트는 환경변수로 오버라이드 가능 (Docker 포함)
     host = os.environ.get('FLASK_RUN_HOST', '0.0.0.0')
     port = int(os.environ.get('FLASK_RUN_PORT', '8000'))
     app.run(debug=False, use_reloader=False, port=port, host=host)
-

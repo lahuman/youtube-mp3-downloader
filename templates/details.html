@@ -87,7 +87,8 @@
 
   function validateYouTubeUrl() {
     var url = document.getElementById('youtube_url').value;
-    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9\-_]{11}([&?][a-zA-Z0-9\-_]+=[a-zA-Z0-9\-_]+)*$/;
+    // shorts, watch, youtu.be 형식을 모두 허용하는 느슨한 검증
+    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/[a-zA-Z0-9_\-/?=&]+$/;
     return pattern.test(url);
   }
 
