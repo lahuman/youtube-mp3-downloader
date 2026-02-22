@@ -4,11 +4,38 @@ import re
 import shutil
 from typing import Optional
 
+import redis
+from rq import get_current_job
 import yt_dlp
 from yt_dlp.utils import DownloadError, ExtractorError
 
 
 logger = logging.getLogger(__name__)
+
+# Redis 설정 (app.py와 동일한 환경변수 사용)
+REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
+REDIS_DB = int(os.environ.get("REDIS_DB", "0"))
+
+PROGRESS_KEY_PREFIX = "yt_progress"
+
+
+def set_progress(job_id: Optional[str], status: str, percent: float) -> None:
+  """특정 RQ job에 대한 진행률/상태를 Redis에 기록.
+
+  - job_id 가 없으면 아무 것도 하지 않는다.
+  - percent는 0~100 사이로 클램핑한다.
+  """
+  if not job_id:
+    return
+
+  p = max(0.0, min(100.0, float(percent)))
+
+  try:
+    r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+    r.hset(f"{PROGRESS_KEY_PREFIX}:{job_id}", mapping={"status": status, "percent": str(p)})
+  except Exception as e:
+    logger.error(f"Failed to update progress for job {job_id}: {e}")
 
 
 INVALID_FILENAME_CHARS = r"\\/:*?\"<>|"
@@ -32,12 +59,37 @@ def sanitize_filename(filename: str) -> str:
   return sanitized or "DownloadedFile"
 
 
+def make_progress_hook(job_id: Optional[str]):
+  """yt_dlp progress hook 생성.
+
+  - 다운로드 중(download status)에는 downloaded/total 로 percent 계산
+  - 거의 끝난 시점(finished)에서는 99%로 올려두고 마무리는 상위 로직에서 100%로 설정
+  """
+
+  def hook(d):
+    status = d.get("status")
+    if status == "downloading":
+      total = d.get("total_bytes") or d.get("total_bytes_estimate")
+      downloaded = d.get("downloaded_bytes", 0)
+      if total:
+        percent = downloaded / total * 100.0
+      else:
+        percent = 0.0
+      set_progress(job_id, "in_progress", percent)
+    elif status == "finished":
+      # 후속 후처리(컨버전 등)를 고려해 99%로만 올려둔다.
+      set_progress(job_id, "in_progress", 99.0)
+
+  return hook
+
+
 def download_video(
   video_url: str,
   output_path: str,
   format: str = "mp3",
   quality: str = "192",
   cookie_file: Optional[str] = None,
+  job_id: Optional[str] = None,
 ) -> Optional[str]:
   """yt_dlp 를 사용해 실제 영상/오디오를 다운로드.
 
@@ -62,6 +114,9 @@ def download_video(
     "js_runtimes": {"deno": {}},
     "remote_components": ["ejs:npm"],
   }
+
+  # 진행률 hook 등록
+  ydl_opts["progress_hooks"] = [make_progress_hook(job_id)]
 
   if cookie_file:
     ydl_opts["cookiefile"] = cookie_file
@@ -111,9 +166,11 @@ def download_video(
       ydl.download([video_url])
   except (DownloadError, ExtractorError) as e:
     logger.error(f"Failed to download video {video_url}: {e}")
+    set_progress(job_id, "failed", 0.0)
     return None
   except Exception as e:
     logger.error(f"An unexpected error occurred during download: {e}")
+    set_progress(job_id, "failed", 0.0)
     return None
 
   # yt_dlp 가 outtmpl 에 맞춰 생성한 실제 파일명을 기준으로 실제 파일 경로를 찾는다.
@@ -177,12 +234,20 @@ def download_media(
     )
     return None
 
+  # 현재 RQ job 정보(진행률 기록용)
+  job = get_current_job()
+  job_id = job.id if job else None
+
+  # 초기 진행률 0%로 설정
+  set_progress(job_id, "in_progress", 0.0)
+
   duration = info_dict.get("duration", 0) or 0
   if duration == 0 or duration > 60 * 60 * 2:
     # 2시간 초과 영상은 거절
     logger.warning(
       "Video duration out of allowed range (0 or >2h): %s seconds", duration
     )
+    set_progress(job_id, "failed", 0.0)
     return None
 
   title = info_dict.get("title", "DownloadedFile")
@@ -201,8 +266,16 @@ def download_media(
 
   # 새로 다운로드
   output_prefix = f"{file_base}-{quality}"
-  final_path = download_video(url, output_prefix, format=format, quality=quality, cookie_file=cookie_file)
+  final_path = download_video(
+    video_url=url,
+    output_path=output_prefix,
+    format=format,
+    quality=quality,
+    cookie_file=cookie_file,
+    job_id=job_id,
+  )
   if final_path is None:
+    set_progress(job_id, "failed", 0.0)
     return None
 
   # 확장자가 예상과 다를 경우에도 target_path 로 맞춰주는 것이 깔끔할 수 있음
@@ -213,5 +286,8 @@ def download_media(
     except OSError:
       # rename 실패해도 그냥 기존 경로 반환
       pass
+
+  # 최종 완료 시 100%로 마무리
+  set_progress(job_id, "complete", 100.0)
 
   return final_path

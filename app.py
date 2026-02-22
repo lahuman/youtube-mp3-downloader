@@ -11,7 +11,7 @@ from flask_session import Session
 import redis
 from rq import Queue
 from rq.job import Job
-from tasks import download_media
+from tasks import download_media, PROGRESS_KEY_PREFIX
 
 app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'redis'
@@ -298,23 +298,43 @@ def download():
 
     return jsonify({'message': 'Download started', 'job_id': job.get_id()}), 202
 
+def get_progress(job_id: str):
+    """Redis에 저장된 진행률/상태 정보를 조회.
+
+    tasks.py 의 set_progress 와 동일한 키 규칙을 사용한다.
+    """
+    try:
+        progress_data = r.hgetall(f"{PROGRESS_KEY_PREFIX}:{job_id}")
+        if not progress_data:
+            return None
+        status = progress_data.get(b"status", b"in_progress").decode()
+        try:
+            percent = float(progress_data.get(b"percent", b"0").decode())
+        except ValueError:
+            percent = 0.0
+        return {"status": status, "percent": percent}
+    except Exception:
+        return None
+
+
 @app.route('/status/<job_id>')
 def check_status(job_id):
     job = Job.fetch(job_id, connection=r)
+    progress = get_progress(job_id) or {"status": "in_progress", "percent": 0.0}
 
     if job.is_finished:
         # download_media 가 실제 파일 경로(문자열)를 반환했을 때만 성공 처리
         if job.result and isinstance(job.result, str) and os.path.exists(job.result):
             session['download_path'] = job.result
-            return jsonify({'status': 'complete'}), 200
+            return jsonify({'status': 'complete', 'percent': 100.0}), 200
         else:
             session['download_path'] = None
-            return jsonify({'status': 'failed'}), 202
+            return jsonify({'status': 'failed', 'percent': progress.get('percent', 0.0)}), 202
     elif job.is_failed:
         session['download_path'] = None
-        return jsonify({'status': 'failed'}), 202
+        return jsonify({'status': 'failed', 'percent': progress.get('percent', 0.0)}), 202
     else:
-        return jsonify({'status': 'in progress'}), 202
+        return jsonify({'status': 'in_progress', 'percent': progress.get('percent', 0.0)}), 202
 
 
 @app.route('/serve_file')
