@@ -43,11 +43,11 @@ TRANSLATIONS = {
     "en": {
         "meta_title": "YouTube MP3 & MP4 Downloader",
         "meta_description": "Fast and simple YouTube to MP3 and MP4 downloader. Paste a YouTube link and download high‑quality audio or video for offline use where permitted by law.",
-        "hero_badge": "Instant, lightweight YouTube to MP3 / MP4",
-        "hero_title": "Convert YouTube links to MP3 or MP4 in seconds.",
-        "hero_subtitle": "Paste a YouTube URL, pick your format, and download high‑quality audio or video for personal use where it is legally permitted.",
-        "url_label": "YouTube URL",
-        "url_placeholder": "https://www.youtube.com/watch?v=…",
+        "hero_badge": "Instant, lightweight YouTube / X / Vimeo to MP3 / MP4",
+        "hero_title": "Convert video links to MP3 or MP4 in seconds.",
+        "hero_subtitle": "Paste a YouTube, X(Twitter), or Vimeo URL, pick your format, and download high‑quality audio or video for personal use where it is legally permitted.",
+        "url_label": "Video URL (YouTube / X / Vimeo)",
+        "url_placeholder": "https://www.youtube.com/watch?v=… or https://x.com/...",
         "home_primary_cta": "Continue to format selection",
         "home_clear": "Clear URL",
         "feature_mp3": "MP3 up to 320 kbps",
@@ -91,11 +91,11 @@ TRANSLATIONS = {
     "ko": {
         "meta_title": "YouTube MP3 & MP4 다운로더",
         "meta_description": "간단하고 빠른 YouTube MP3 · MP4 변환기. 유튜브 링크만 붙여넣고 고음질 오디오/영상 파일을 합법적인 범위 내에서 다운로드하세요.",
-        "hero_badge": "가볍고 빠른 YouTube → MP3 / MP4",
-        "hero_title": "유튜브 링크를 몇 초 만에 MP3/MP4로 변환하세요.",
-        "hero_subtitle": "YouTube URL을 붙여넣고 형식을 고른 다음, 개인·합법적인 용도 안에서 고음질 파일을 저장할 수 있습니다.",
-        "url_label": "YouTube URL",
-        "url_placeholder": "https://www.youtube.com/watch?v=…",
+        "hero_badge": "가볍고 빠른 YouTube / X / Vimeo → MP3 / MP4",
+        "hero_title": "영상 링크를 몇 초 만에 MP3/MP4로 변환하세요.",
+        "hero_subtitle": "YouTube, X(Twitter), Vimeo 링크를 붙여넣고 형식을 고른 다음, 개인·합법적인 용도 안에서 고음질 파일을 저장할 수 있습니다.",
+        "url_label": "영상 URL (YouTube / X / Vimeo)",
+        "url_placeholder": "https://www.youtube.com/watch?v=… 또는 https://x.com/...",
         "home_primary_cta": "다음 단계로 (형식 선택)",
         "home_clear": "주소 지우기",
         "feature_mp3": "MP3 최대 320 kbps",
@@ -139,11 +139,11 @@ TRANSLATIONS = {
     "ja": {
         "meta_title": "YouTube MP3・MP4 ダウンローダー",
         "meta_description": "シンプルで高速な YouTube MP3 / MP4 変換ツール。YouTube の URL を貼り付けるだけで、法律の範囲内で高音質の音声や動画をダウンロードできます。",
-        "hero_badge": "軽量・高速な YouTube → MP3 / MP4",
-        "hero_title": "YouTube のリンクを数秒で MP3 / MP4 に変換。",
-        "hero_subtitle": "YouTube の URL を貼り付けて形式を選ぶだけで、個人的かつ合法な用途に限り高品質なファイルを保存できます。",
-        "url_label": "YouTube URL",
-        "url_placeholder": "https://www.youtube.com/watch?v=…",
+        "hero_badge": "軽量・高速な YouTube / X / Vimeo → MP3 / MP4",
+        "hero_title": "動画リンクを数秒で MP3 / MP4 に変換。",
+        "hero_subtitle": "YouTube、X(Twitter)、Vimeo の URL を貼り付けて形式を選ぶだけで、個人的かつ合法な用途に限り高品質なファイルを保存できます。",
+        "url_label": "動画 URL (YouTube / X / Vimeo)",
+        "url_placeholder": "https://www.youtube.com/watch?v=… または https://x.com/...",
         "home_primary_cta": "次へ進む（形式を選択）",
         "home_clear": "URL をクリア",
         "feature_mp3": "MP3 最大 320 kbps",
@@ -234,6 +234,26 @@ def is_valid_youtube_url(url):
     return re.match(youtube_regex, url)
 
 
+def is_twitter_url(url: str) -> bool:
+    """X(Twitter) URL 검증 (영상/포스트 URL 전반 허용)."""
+    twitter_regex = r'(https?://)?(www\.)?(x\.com|twitter\.com)/.+'
+    return re.match(twitter_regex, url) is not None
+
+
+def is_vimeo_url(url: str) -> bool:
+    """Vimeo URL 검증."""
+    vimeo_regex = r'(https?://)?(www\.)?vimeo\.com/.+'
+    return re.match(vimeo_regex, url) is not None
+
+
+def is_supported_url(url: str) -> bool:
+    """지원하는 플랫폼 URL인지 확인.
+
+    현재는 YouTube, X(Twitter), Vimeo 를 허용한다.
+    """
+    return bool(is_valid_youtube_url(url) or is_twitter_url(url) or is_vimeo_url(url))
+
+
 def normalize_youtube_url(url: str) -> str:
     """여러 파라미터가 붙은 YouTube URL을 단일 영상 URL로 정규화.
 
@@ -266,12 +286,13 @@ def home():
 @app.route('/details', methods=['POST'])
 def details():
     youtube_url = request.form.get('youtube_url', '')
-    if not youtube_url or not is_valid_youtube_url(youtube_url):
-        flash('Invalid YouTube URL.', category='error')
+    if not youtube_url or not is_supported_url(youtube_url):
+        flash('Invalid or unsupported URL. Supported: YouTube, X(Twitter), Vimeo.', category='error')
         return redirect(url_for('home'))
 
-    # 플레이리스트/ラジオ形式のURLでも 단일 영상으로 처리할 수 있도록 정규화
-    youtube_url = normalize_youtube_url(youtube_url)
+    # YouTube 인 경우에만 단일 영상 URL로 정규화
+    if is_valid_youtube_url(youtube_url):
+        youtube_url = normalize_youtube_url(youtube_url)
 
     video_info = get_video_info(youtube_url)
     if video_info:
@@ -297,12 +318,25 @@ def get_video_info(url):
             # process=False 로 설정해 포맷 선택 과정을 건너뛰고
             # 원시 메타데이터만 가져온다. (일부 영상에서 "Requested format is not available" 회피)
             info_dict = ydl.extract_info(url, download=False, process=False)
+
+            # 썸네일은 플랫폼마다 위치가 다를 수 있으므로 몇 가지 후보를 순서대로 찾는다.
+            thumbnail = info_dict.get('thumbnail')
+            if not thumbnail:
+                # yt_dlp 표준 thumbnails 필드
+                thumbs = info_dict.get('thumbnails') or []
+                if isinstance(thumbs, list) and thumbs:
+                    # 가장 마지막(보통 가장 고해상도)을 사용
+                    thumbnail = thumbs[-1].get('url') or thumbs[0].get('url')
+            if not thumbnail:
+                # 일부 사이트(예: Twitter/X)에서 쓰는 필드명 대비
+                thumbnail = info_dict.get('thumbnail_url')
+
             video_info = {
                 'id': info_dict.get('id'),
                 'url': url,
                 'title': info_dict.get('title'),
-                'uploader': info_dict.get('uploader'),
-                'thumbnail': info_dict.get('thumbnail'),
+                'uploader': info_dict.get('uploader') or info_dict.get('channel') or info_dict.get('uploader_id'),
+                'thumbnail': thumbnail,
                 'duration': info_dict.get('duration')
             }
             return video_info
@@ -317,11 +351,12 @@ def download():
     format = request.form.get('format', 'mp3')  # Default to MP3 if not specified
     quality = request.form.get('quality', '192')
 
-    if not youtube_url or not is_valid_youtube_url(youtube_url):
-        return jsonify({'error': 'Invalid URL'}), 400
+    if not youtube_url or not is_supported_url(youtube_url):
+        return jsonify({'error': 'Invalid or unsupported URL. Supported: YouTube, X(Twitter), Vimeo.'}), 400
 
-    # 플레이리스트/ラジオ形式のURL에서도 단일 영상 ID만 추출해 사용
-    youtube_url = normalize_youtube_url(youtube_url)
+    # YouTube 의 경우에만 단일 영상 ID로 정규화 (플레이리스트 등)
+    if is_valid_youtube_url(youtube_url):
+        youtube_url = normalize_youtube_url(youtube_url)
 
     # Start the download as a background job
     job = q.enqueue(download_media, youtube_url, format, quality, app.config['COOKIE_FILE_PATH'])

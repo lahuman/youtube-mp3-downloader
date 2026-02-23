@@ -34,7 +34,7 @@
           name="youtube_url"
           placeholder="{{ t('url_placeholder') }}"
           required
-          aria-label="YouTube video URL"
+          aria-label="Video URL (YouTube / X / Vimeo)"
         />
       </div>
 
@@ -82,17 +82,19 @@
 
 {% block scripts %}
 <script>
-  function validateYouTubeUrl() {
+  function validateSupportedUrl() {
     var url = document.getElementById('youtube_url').value;
-    // 서버에서 shorts / watch / youtu.be 모두 정규화하므로,
-    // 클라이언트에서는 "youtube 도메인 + 11자리 ID" 정도만 느슨하게 검증한다.
-    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/[a-zA-Z0-9_\-/?=&]+$/;
-    return pattern.test(url);
+    // 서버에서 최종 검증을 다시 수행하지만,
+    // 클라이언트에서는 대략적인 도메인만 확인해 사용성을 높인다.
+    var youtube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//;
+    var twitter = /^(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\//;
+    var vimeo   = /^(https?:\/\/)?(www\.)?vimeo\.com\//;
+    return youtube.test(url) || twitter.test(url) || vimeo.test(url);
   }
 
   function showOverlay() {
-    if (!validateYouTubeUrl()) {
-      alert('{{ t('alert_invalid_url') }}');
+    if (!validateSupportedUrl()) {
+      alert('지원하지 않는 URL 형식입니다.\nYouTube / X(Twitter) / Vimeo 링크만 입력해 주세요.');
       return false;
     }
     const overlay = document.getElementById('overlay');
@@ -121,4 +123,3 @@
   }
 </script>
 {% endblock %}
-

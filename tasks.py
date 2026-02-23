@@ -141,19 +141,29 @@ def download_video(
       }
     )
   elif format == "mp4":
-    # UI에서 선택한 해상도(360p/720p 등)에 따라 포맷을 제한한다.
-    # 기본값이나 알 수 없는 값이 들어오면 best 로 fallback.
-    height = None
-    if quality.endswith("p") and quality[:-1].isdigit():
-      try:
-        height = int(quality[:-1])
-      except ValueError:
-        height = None
+    # 플랫폼에 따라 품질 처리 방식을 다르게 한다.
+    # - YouTube: UI에서 선택한 해상도(360p/720p 등)를 honor
+    # - Twitter/X, Vimeo 등: 가용 포맷이 제한적인 경우가 많으므로 best 로 강제
+    video_url_lower = (video_url or "").lower()
+    is_twitter = "twitter.com" in video_url_lower or "x.com" in video_url_lower
+    is_vimeo = "vimeo.com" in video_url_lower
 
-    if height:
-      fmt = f"bv*[height<={height}]+ba/best[height<={height}]"
+    if is_twitter or is_vimeo:
+      fmt = "bestvideo*+bestaudio/best"
     else:
-      fmt = "bestvideo+bestaudio/best"
+      # UI에서 선택한 해상도(360p/720p 등)에 따라 포맷을 제한한다.
+      # 기본값이나 알 수 없는 값이 들어오면 best 로 fallback.
+      height = None
+      if quality.endswith("p") and quality[:-1].isdigit():
+        try:
+          height = int(quality[:-1])
+        except ValueError:
+          height = None
+
+      if height:
+        fmt = f"bv*[height<={height}]+ba/best[height<={height}]"
+      else:
+        fmt = "bestvideo+bestaudio/best"
 
     ydl_opts.update(
       {
