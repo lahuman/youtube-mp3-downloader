@@ -13,6 +13,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
+      # 다운로드 최대 영상 길이 (초 단위)
+      - MAX_DURATION_SECONDS=600
       # 쿠키 파일 경로 (필요하면 호스트에서 마운트)
       - COOKIE_FILE_PATH=/app/cookies.txt
       # 세션 키는 필요에 따라 override 권장
@@ -32,6 +34,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
+      - MAX_DURATION_SECONDS=600
       - COOKIE_FILE_PATH=/app/cookies.txt
       - SECRET_KEY=helloWorldMyNameIslahuman!+_+
     volumes:

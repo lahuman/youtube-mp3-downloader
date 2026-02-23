@@ -17,6 +17,9 @@ REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
 REDIS_DB = int(os.environ.get("REDIS_DB", "0"))
 
+# 최대 영상 길이 (초 단위, 기본값 600초=10분)
+MAX_DURATION_SECONDS = int(os.environ.get("MAX_DURATION_SECONDS", "600"))
+
 PROGRESS_KEY_PREFIX = "yt_progress"
 
 
@@ -255,10 +258,12 @@ def download_media(
   set_progress(job_id, "downloading", 0.0)
 
   duration = info_dict.get("duration", 0) or 0
-  if duration == 0 or duration > 60 * 60 * 2:
-    # 2시간 초과 영상은 거절
+  if duration == 0 or duration > MAX_DURATION_SECONDS:
+    # 영상 길이 제한 초과 거절
     logger.warning(
-      "Video duration out of allowed range (0 or >2h): %s seconds", duration
+      "Video duration out of allowed range (0 or >%ss): %s seconds",
+      MAX_DURATION_SECONDS,
+      duration
     )
     set_progress(job_id, "failed", 0.0)
     return None

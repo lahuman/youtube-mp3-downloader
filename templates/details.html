@@ -80,7 +80,7 @@
 
 {% block scripts %}
 <script>
-  if ('{{ video_info.duration }}' == 'None' || {{ video_info.duration or 0 }} >= (60 * 60 * 2)) {
+  if ('{{ video_info.duration }}' == 'None' || {{ video_info.duration or 0 }} > {{ max_duration_seconds }}) {
     alert('{{ t('alert_long_video') }}');
     window.location.href = '/';
   }

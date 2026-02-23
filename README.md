@@ -25,6 +25,14 @@ YouTube MP3 Downloader는 사용자가 YouTube 동영상의 URL을 입력하면 
 - Docker Compose로 `web (Flask + gunicorn) / worker / redis` 한 번에 배포 가능
 - i18n 지원: 한국어 / 영어 / 일본어 UI 및 메타 태그로 기본 SEO 고려
 
+## 환경 변수 설정
+프로젝트 실행 시 다음 환경 변수를 통해 동작을 제어할 수 있습니다:
+- `REDIS_HOST`: Redis 서버 호스트 (기본값: `localhost`)
+- `REDIS_PORT`: Redis 서버 포트 (기본값: `6379`)
+- `REDIS_DB`: Redis 데이터베이스 인덱스 (기본값: `0`)
+- `MAX_DURATION_SECONDS`: 다운로드 가능한 최대 영상 길이 (초 단위, 기본값: `600`)
+- `COOKIE_FILE_PATH`: 유튜브 쿠키 파일 경로 (기본값: `cookies.txt`)
+
 ## 시작하기
 
 ### 필요 조건

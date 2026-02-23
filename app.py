@@ -23,6 +23,10 @@ REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.environ.get('REDIS_PORT', '6379'))
 REDIS_DB = int(os.environ.get('REDIS_DB', '0'))
 
+# 최대 영상 길이 (초 단위, 기본값 600초=10분)
+MAX_DURATION_SECONDS = int(os.environ.get('MAX_DURATION_SECONDS', '600'))
+MAX_DURATION_MINUTES = MAX_DURATION_SECONDS // 60
+
 app.config['SESSION_REDIS'] = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 
 Session(app)
@@ -50,13 +54,14 @@ TRANSLATIONS = {
         "feature_mp4": "MP4 up to 720p",
         "feature_background": "Background processing – no browser freeze",
         "feature_cookie": "Cookie support for age‑restricted videos",
+        "feature_limit": f"Max {MAX_DURATION_MINUTES} minutes duration",
         "legal_home": "This tool is intended for personal use only. You are responsible for ensuring you have the rights to download and convert any content. Always follow YouTube's Terms of Service and applicable copyright laws.",
         "details_selected_video": "Selected video",
         "details_format": "Format",
         "details_quality": "Quality",
         "details_start": "Start download",
         "details_back": "Back to URL input",
-        "details_note": "Downloads longer than 2 hours or realtime/live streams may fail or be blocked to prevent overload.",
+        "details_note": f"Downloads longer than {MAX_DURATION_MINUTES} minutes or realtime/live streams may fail or be blocked to prevent overload.",
         "footer_notice": "This tool is provided for personal, lawful use only. Please respect YouTube's Terms of Service and copyright laws in your country.",
         "overlay_text": "Preparing your download…",
         "overlay_downloading": "Downloading…",
@@ -74,7 +79,7 @@ TRANSLATIONS = {
         "lang_ko": "한국어",
         "lang_ja": "日本語",
         "alert_invalid_url": "Please enter a valid YouTube URL.",
-        "alert_long_video": "Videos longer than 2 hours or realtime cannot be processed.",
+        "alert_long_video": f"Videos longer than {MAX_DURATION_MINUTES} minutes or realtime cannot be processed.",
         "alert_download_ready": "Your download is ready.",
         "alert_download_failed": "Download failed. Please try again.",
         "alert_download_error": "Error: File could not be downloaded.",
@@ -97,13 +102,14 @@ TRANSLATIONS = {
         "feature_mp4": "MP4 최대 720p",
         "feature_background": "백그라운드 처리로 브라우저 멈춤 최소화",
         "feature_cookie": "쿠키 사용으로 연령 제한 영상 대응",
+        "feature_limit": f"최대 {MAX_DURATION_MINUTES}분 영상 제한",
         "legal_home": "이 도구는 개인적이고 합법적인 용도로만 제공됩니다. 콘텐츠를 다운로드·변환할 권리가 있는지 항상 확인하고, YouTube 이용약관과 저작권 법규를 준수해 주세요.",
         "details_selected_video": "선택한 영상",
         "details_format": "형식",
         "details_quality": "품질",
         "details_start": "다운로드 시작",
         "details_back": "URL 입력 화면으로",
-        "details_note": "2시간이 넘는 영상이나 실시간 스트림은 서버 보호를 위해 제한되거나 실패할 수 있습니다.",
+        "details_note": f"{MAX_DURATION_MINUTES}분이 넘는 영상이나 실시간 스트림은 서버 보호를 위해 제한되거나 실패할 수 있습니다.",
         "footer_notice": "이 도구는 개인·합법적인 사용에 한해 제공됩니다. 항상 YouTube 이용약관과 각 국가의 저작권 법을 지켜 주세요.",
         "overlay_text": "다운로드를 준비하고 있습니다…",
         "overlay_downloading": "다운로드 중…",
@@ -121,7 +127,7 @@ TRANSLATIONS = {
         "lang_ko": "한국어",
         "lang_ja": "日本語",
         "alert_invalid_url": "올바른 YouTube URL을 입력해 주세요.",
-        "alert_long_video": "2시간이 넘는 영상이나 실시간 영상은 처리할 수 없습니다.",
+        "alert_long_video": f"{MAX_DURATION_MINUTES}분이 넘는 영상이나 실시간 영상은 처리할 수 없습니다.",
         "alert_download_ready": "다운로드를 시작합니다.",
         "alert_download_failed": "다운로드에 실패했습니다. 다시 시도해 주세요.",
         "alert_download_error": "파일을 다운로드할 수 없습니다.",
@@ -144,13 +150,14 @@ TRANSLATIONS = {
         "feature_mp4": "MP4 最大 720p",
         "feature_background": "バックグラウンド処理でブラウザのフリーズを軽減",
         "feature_cookie": "クッキー対応で年齢制限付き動画にも対応",
+        "feature_limit": f"最大 {MAX_DURATION_MINUTES} 分の動画制限",
         "legal_home": "本ツールは個人的かつ合法的な利用のみを目的としています。常にコンテンツをダウンロード・変換する権利があるか確認し、YouTube の利用規約および著作権法を遵守してください。",
         "details_selected_video": "選択した動画",
         "details_format": "形式",
         "details_quality": "品質",
         "details_start": "ダウンロードを開始",
         "details_back": "URL 入力画面に戻る",
-        "details_note": "2 時間を超える動画やライブ配信は、負荷対策のため制限または失敗する場合があります。",
+        "details_note": f"{MAX_DURATION_MINUTES} 分を超える動画やライブ配信は、負荷対策のため制限または失敗する場合があります。",
         "footer_notice": "本ツールは個人的かつ合法的な利用に限定して提供されます。YouTube の利用規約と各国の著作権法を必ず守ってください。",
         "overlay_text": "ダウンロードの準備中です…",
         "overlay_downloading": "ダウンロード中…",
@@ -169,7 +176,7 @@ TRANSLATIONS = {
         "lang_ko": "한국어",
         "lang_ja": "日本語",
         "alert_invalid_url": "正しい YouTube URL を入力してください。",
-        "alert_long_video": "2 時間を超える動画やライブ配信は処理できません。",
+        "alert_long_video": f"{MAX_DURATION_MINUTES} 分を超える動画やライブ配信は処理できません。",
         "alert_download_ready": "ダウンロードを開始します。",
         "alert_download_failed": "ダウンロードに失敗しました。もう一度お試しください。",
         "alert_download_error": "ファイルをダウンロードできませんでした。",
@@ -289,7 +296,7 @@ def details():
 
     video_info = get_video_info(youtube_url)
     if video_info:
-        return render_template('details.html', video_info=video_info, youtube_url=youtube_url)
+        return render_template('details.html', video_info=video_info, youtube_url=youtube_url, max_duration_seconds=MAX_DURATION_SECONDS)
     else:
         flash('Could not retrieve video details.', category='error')
         return redirect(url_for('home'))
