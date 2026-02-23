@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Confirm YouTube download – {{ video_info.title }}{% endblock %}
+{% block title %}Confirm download – {{ video_info.title }}{% endblock %}
 
 {% block extra_head %}
-  <meta name="description" content="Download '{{ video_info.title }}' from YouTube as MP3 or MP4. Choose audio quality or video resolution and start the download in one click." />
+  <meta name="description" content="Download '{{ video_info.title }}' as MP3 or MP4. Choose audio quality or video resolution and start the download in one click." />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "applicationCategory": "Multimedia",
     "name": "YouTube MP3 & MP4 Downloader",
-    "description": "Web tool to convert YouTube videos like '{{ video_info.title }}' to MP3 or MP4.",
+    "description": "Web tool to convert videos like '{{ video_info.title }}' to MP3 or MP4.",
     "operatingSystem": "Web",
     "offers": {"@type": "Offer", "price": "0"}
   }
@@ -85,11 +85,13 @@
     window.location.href = '/';
   }
 
-  function validateYouTubeUrl() {
+  function validateSupportedUrl() {
     var url = document.getElementById('youtube_url').value;
-    // shorts, watch, youtu.be 형식을 모두 허용하는 느슨한 검증
-    var pattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/[a-zA-Z0-9_\-/?=&]+$/;
-    return pattern.test(url);
+    // YouTube / X(Twitter) / Vimeo 도메인만 허용하는 느슨한 검증
+    var youtube = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//;
+    var twitter = /^(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\//;
+    var vimeo   = /^(https?:\/\/)?(www\.)?vimeo\.com\//;
+    return youtube.test(url) || twitter.test(url) || vimeo.test(url);
   }
 
   // 포맷에 따라 품질 옵션 동적으로 변경 (오디오/비디오)
@@ -117,9 +119,9 @@
   updateQualityOptions();
 
   const textDownloading = "{{ t('overlay_downloading') }}";
-  const textConverting = "{{ t('overlay_converting') }}";
-  const textComplete = "{{ t('overlay_complete') }}";
-  const textFailed = "{{ t('overlay_failed') }}";
+  const textConverting  = "{{ t('overlay_converting') }}";
+  const textComplete    = "{{ t('overlay_complete') }}";
+  const textFailed      = "{{ t('overlay_failed') }}";
 
   function updateProgress(percent, phase) {
     const overlay = document.getElementById('overlay');
@@ -188,8 +190,8 @@
   $('#downloadForm').on('submit', function (e) {
     e.preventDefault();
 
-    if (!validateYouTubeUrl()) {
-      alert("{{ t('alert_invalid_url') }}");
+    if (!validateSupportedUrl()) {
+      alert("지원하지 않는 URL 형식입니다.\nYouTube / X(Twitter) / Vimeo 링크만 입력해 주세요.");
       return false;
     }
 

@@ -15,10 +15,11 @@ YouTube MP3 Downloader는 사용자가 YouTube 동영상의 URL을 입력하면 
 - MP4 해상도 선택 기능 추가: **360p / 720p** 선택 시 yt-dlp 포맷에 실제 반영 **24.4.XX**
 - 다운로드 진행률(%) 표시 및 상태 폴링 개선: Redis + RQ job 기반으로 실시간 진행률 노출, 모바일에서 진행 상태를 명확히 확인 가능 **25.2.XX**
 - YouTube Shorts URL 지원: `/shorts/<id>` 형태 URL을 자동으로 `watch?v=<id>` URL로 정규화하여 일반 영상과 동일하게 처리 **25.2.XX**
+- X(Twitter) / Vimeo 지원: YouTube 외에도 공개 X(Twitter) 포스트 및 Vimeo 영상 URL에서 MP3/MP4 추출 지원 (yt-dlp 백엔드 기반) **25.2.XX**
 
 ## 주요 기능
-- YouTube 동영상 URL을 통한 MP3/MP4 파일 생성 및 다운로드
-- MP4 다운로드 시 360p / 720p 해상도 선택 지원
+- YouTube / X(Twitter) / Vimeo 영상 URL을 통한 MP3/MP4 파일 생성 및 다운로드
+- MP4 다운로드 시 360p / 720p 해상도 선택 지원 (YouTube 기준, X/Vimeo는 가용한 최고 화질 자동 선택)
 - yt-dlp + ffmpeg 기반 고품질 오디오/비디오 추출
 - [python-rq](https://python-rq.org/) + Redis 기반 비동기 다운로드 처리(브라우저 멈춤 방지)
 - Docker Compose로 `web (Flask + gunicorn) / worker / redis` 한 번에 배포 가능
