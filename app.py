@@ -226,10 +226,11 @@ def is_valid_youtube_url(url):
     - shorts 형식 (https://www.youtube.com/shorts/<id>) 도 허용
     """
     youtube_regex = (
-        r'(https?://)?(www\.)?'
-        r'(youtube\.com|youtu\.be)/'
-        r'(watch\?v=|embed/|v/|shorts/|.+\?v=)?([a-zA-Z0-9\-_]{11})'
-        r'(&[a-zA-Z0-9\-=]*)*'
+        r'(?:https?://)?(?:www\.|m\.)?'
+        r'(?:youtube\.com|youtu\.be)/'
+        r'(?:watch\?v=|embed/|v/|shorts/|.+\?v=)?'
+        r'([a-zA-Z0-9_-]{11})'
+        r'(?:&[a-zA-Z0-9=%-]*)*'
     )
     return re.match(youtube_regex, url)
 
