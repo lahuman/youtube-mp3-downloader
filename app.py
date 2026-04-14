@@ -11,7 +11,7 @@ from flask_session import Session
 import redis
 from rq import Queue
 from rq.job import Job
-from tasks import download_media, PROGRESS_KEY_PREFIX
+from tasks import download_media, PROGRESS_KEY_PREFIX, apply_youtube_extractor_workarounds
 
 app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'redis'
@@ -310,6 +310,7 @@ def get_video_info(url):
         'quiet': True,
         'no_warnings': True,
     }
+    apply_youtube_extractor_workarounds(url, ydl_opts)
     cookie_path = app.config.get('COOKIE_FILE_PATH')
     if cookie_path and os.path.exists(cookie_path):
         ydl_opts['cookiefile'] = cookie_path

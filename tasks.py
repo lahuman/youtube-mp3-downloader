@@ -21,6 +21,20 @@ REDIS_DB = int(os.environ.get("REDIS_DB", "0"))
 MAX_DURATION_SECONDS = int(os.environ.get("MAX_DURATION_SECONDS", "600"))
 
 PROGRESS_KEY_PREFIX = "yt_progress"
+YOUTUBE_JS_RUNTIMES = {"deno": {}, "node": {}}
+YOUTUBE_REMOTE_COMPONENTS = ["ejs:github", "ejs:npm"]
+
+
+def apply_youtube_extractor_workarounds(url: str, ydl_opts: dict) -> dict:
+  """YouTube 추출에 필요한 JS runtime / EJS solver 옵션을 주입한다."""
+  normalized = (url or "").lower()
+  if "youtube.com" not in normalized and "youtu.be" not in normalized:
+    return ydl_opts
+
+  # YouTube는 메타데이터 조회 단계에서도 JS/EJS challenge solver가 필요한 경우가 있다.
+  ydl_opts["js_runtimes"] = dict(YOUTUBE_JS_RUNTIMES)
+  ydl_opts["remote_components"] = list(YOUTUBE_REMOTE_COMPONENTS)
+  return ydl_opts
 
 
 def set_progress(job_id: Optional[str], status: str, percent: float) -> None:
@@ -114,12 +128,8 @@ def download_video(
     "quiet": False,
     "verbose": True,
     "outtmpl": output_path + ".%(ext)s",
-    # EJS/SABR 대응: deno 런타임 + EJS challenge solver 스크립트 사용
-    # 참고: https://github.com/yt-dlp/yt-dlp/wiki/EJS
-    # js_runtimes 형식은 {runtime: {config}} 딕셔너리여야 한다.
-    "js_runtimes": {"deno": {}},
-    "remote_components": ["ejs:npm"],
   }
+  apply_youtube_extractor_workarounds(video_url, ydl_opts)
 
   # 진행률 hook 등록
   ydl_opts["progress_hooks"] = [make_progress_hook(job_id)]
@@ -232,6 +242,7 @@ def download_media(
     "quiet": True,
     "no_warnings": True,
   }
+  apply_youtube_extractor_workarounds(url, info_opts)
   if cookie_file and os.path.exists(cookie_file):
     info_opts["cookiefile"] = cookie_file
 
