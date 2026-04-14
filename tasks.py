@@ -3,11 +3,13 @@ import os
 import re
 import shutil
 from typing import Optional
+from urllib.parse import urlparse
 
 import redis
 from rq import get_current_job
 import yt_dlp
 from yt_dlp.utils import DownloadError, ExtractorError
+from youtube_urls import is_youtube_host, prepare_url_for_parsing
 
 
 logger = logging.getLogger(__name__)
@@ -27,8 +29,8 @@ YOUTUBE_REMOTE_COMPONENTS = ["ejs:github", "ejs:npm"]
 
 def apply_youtube_extractor_workarounds(url: str, ydl_opts: dict) -> dict:
   """YouTube 추출에 필요한 JS runtime / EJS solver 옵션을 주입한다."""
-  normalized = (url or "").lower()
-  if "youtube.com" not in normalized and "youtu.be" not in normalized:
+  parsed = urlparse(prepare_url_for_parsing(url))
+  if not is_youtube_host(parsed.netloc):
     return ydl_opts
 
   # YouTube는 메타데이터 조회 단계에서도 JS/EJS challenge solver가 필요한 경우가 있다.

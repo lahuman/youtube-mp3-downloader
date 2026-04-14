@@ -12,6 +12,7 @@ import redis
 from rq import Queue
 from rq.job import Job
 from tasks import download_media, PROGRESS_KEY_PREFIX, apply_youtube_extractor_workarounds
+from youtube_urls import is_valid_youtube_url, normalize_youtube_url
 
 app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'redis'
@@ -219,22 +220,6 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 
-def is_valid_youtube_url(url):
-    """유투브 URL 검증.
-
-    - 일반 watch / embed / v / youtu.be 형식
-    - shorts 형식 (https://www.youtube.com/shorts/<id>) 도 허용
-    """
-    youtube_regex = (
-        r'(?:https?://)?(?:www\.|m\.)?'
-        r'(?:youtube\.com|youtu\.be)/'
-        r'(?:watch\?v=|embed/|v/|shorts/|.+\?v=)?'
-        r'([a-zA-Z0-9_-]{11})'
-        r'(?:&[a-zA-Z0-9=%-]*)*'
-    )
-    return re.match(youtube_regex, url)
-
-
 def is_twitter_url(url: str) -> bool:
     """X(Twitter) URL 검증 (영상/포스트 URL 전반 허용)."""
     twitter_regex = r'(https?://)?(www\.)?(x\.com|twitter\.com)/.+'
@@ -253,31 +238,6 @@ def is_supported_url(url: str) -> bool:
     현재는 YouTube, X(Twitter), Vimeo 를 허용한다.
     """
     return bool(is_valid_youtube_url(url) or is_twitter_url(url) or is_vimeo_url(url))
-
-
-def normalize_youtube_url(url: str) -> str:
-    """여러 파라미터가 붙은 YouTube URL을 단일 영상 URL로 정규화.
-
-    - shorts URL도 watch?v=<id> 형태로 정규화한다.
-    """
-    # 1) shorts 전용 패턴 먼저 처리
-    m = re.match(r'(https?://)?(www\.)?youtube\.com/shorts/([a-zA-Z0-9\-_]{11})', url)
-    if m:
-        video_id = m.group(3)
-        return f"https://www.youtube.com/watch?v={video_id}"
-
-    # 2) 기존 watch/embed/youtu.be 패턴 처리
-    youtube_regex = (
-        r'(https?://)?(www\.)?'
-        r'(youtube\.com|youtu\.be)/'
-        r'(watch\?v=|embed/|v/|.+\?v=)?([a-zA-Z0-9\-_]{11})'
-    )
-    m = re.match(youtube_regex, url)
-    if not m:
-        return url
-
-    video_id = m.group(5)
-    return f"https://www.youtube.com/watch?v={video_id}"
 
 
 @app.route('/', methods=['GET', 'POST'])
